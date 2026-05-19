@@ -1,13 +1,19 @@
 using AutoMapper;
+using FluentValidation;
 
 public class CageService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IValidator<CreateCageDto> _validator;
+
     private readonly IMapper _mapper;
-    public CageService(IUnitOfWork unitOfWork, IMapper mapper)
+    public CageService(IUnitOfWork unitOfWork,
+     IMapper mapper,
+     IValidator<CreateCageDto> validator)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _validator = validator;
 
     }
     public async Task<List<CageDto>> GetAllCagesAsync()
@@ -19,23 +25,26 @@ public class CageService
     {
         var cage = await _unitOfWork.CageRepository.GetByIdAsync(id);
         if (cage == null)
-            throw new NotFoundException("Cage not found");
+            throw new NotFoundException("Không tìm thấy chuồng với ID đã cho");
         return _mapper.Map<CageDto>(cage);
     }
     public async Task<CageDto> AddCageAsync(CreateCageDto cageDto)
     {
+        await ValidateAsync(cageDto);
         var cage = _mapper.Map<Cage>(cageDto);
         await _unitOfWork.CageRepository.AddAsync(cage);
         await _unitOfWork.SaveChangesAsync();
         return _mapper.Map<CageDto>(cage);
     }
-    public async Task UpdateAsync(Guid id, CreateCageDto dto)
+    public async Task UpdateAsync(Guid id, CreateCageDto cageDto)
     {
+        await ValidateAsync(cageDto);
+
         var cage = await _unitOfWork.CageRepository.GetByIdAsync(id);
         if (cage == null)
-            throw new NotFoundException("Cage not found");
+            throw new NotFoundException("Không tìm thấy chuồng với ID đã cho");
 
-        _mapper.Map(dto, cage);
+        _mapper.Map(cageDto, cage);
         _unitOfWork.CageRepository.Update(cage);
         await _unitOfWork.SaveChangesAsync();
     }
@@ -49,4 +58,21 @@ public class CageService
         _unitOfWork.CageRepository.Remove(cage);
         await _unitOfWork.SaveChangesAsync();
     }
+
+    private async Task ValidateAsync(CreateCageDto dto)
+    {
+        var result = await _validator.ValidateAsync(dto);
+
+        if (!result.IsValid)
+        {
+            var errors = result.Errors.Select(e => new ValidationError
+            {
+                Field = e.PropertyName.ToLower(),
+                Message = e.ErrorMessage
+            }).ToList();
+
+            throw new ValidationExceptionCustom(errors);
+        }
+    }
 }
+

@@ -1,4 +1,5 @@
 using AutoMapper;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -37,11 +38,15 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-
+// Register repositories and services
 builder.Services.AddScoped<ICageRepository, CageRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<CageService>();
 
+// Register FluentValidation validators
+builder.Services.AddValidatorsFromAssemblyContaining<CreateCageValidator>();
+
+// Register AutoMapper
 builder.Services.AddAutoMapper(
     cfg => { },
     typeof(MappingProfile).Assembly

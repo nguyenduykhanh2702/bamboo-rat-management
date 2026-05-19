@@ -22,31 +22,64 @@ public class ExceptionMiddleware
                 await HandleNotFoundRouteAsync(context);
             }
         }
+
         catch (Exception ex)
         {
             await HandleExceptionAsync(context, ex);
         }
     }
-    private static Task HandleExceptionAsync(HttpContext context, Exception ex)
+    private static async Task HandleExceptionAsync(HttpContext context, Exception ex)
     {
-        var statusCode = ex switch
-        {
-            NotFoundException => StatusCodes.Status404NotFound,
-            ArgumentException => StatusCodes.Status400BadRequest,
-            UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
-            _ => StatusCodes.Status500InternalServerError
-        };
+        var traceId = context.TraceIdentifier;
 
-        var response = new
+        var response = ex switch
         {
-            statusCode = statusCode,
-            message = ex.Message
+            ValidationExceptionCustom valEx => new ApiErrorResponse
+            {
+                StatusCode = StatusCodes.Status400BadRequest,
+                Message = "Validation failed",
+                Errors = valEx.Errors,
+                TraceId = traceId
+            },
+
+            NotFoundException => new ApiErrorResponse
+            {
+                StatusCode = StatusCodes.Status404NotFound,
+                Message = ex.Message,
+                TraceId = traceId
+            },
+
+            UnauthorizedAccessException => new ApiErrorResponse
+            {
+                StatusCode = StatusCodes.Status401Unauthorized,
+                Message = "Unauthorized",
+                TraceId = traceId
+            },
+
+            ArgumentException => new ApiErrorResponse
+            {
+                StatusCode = StatusCodes.Status400BadRequest,
+                Message = ex.Message,
+                TraceId = traceId
+            },
+
+            _ => new ApiErrorResponse
+            {
+                StatusCode = StatusCodes.Status500InternalServerError,
+                Message = "Internal server error",
+                TraceId = traceId
+            }
         };
 
         context.Response.ContentType = "application/json";
-        context.Response.StatusCode = statusCode;
+        context.Response.StatusCode = response.StatusCode;
 
-        return context.Response.WriteAsync(JsonSerializer.Serialize(response));
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
+        await context.Response.WriteAsync(JsonSerializer.Serialize(response, options));
     }
 
     private static Task HandleNotFoundRouteAsync(HttpContext context)
@@ -54,7 +87,8 @@ public class ExceptionMiddleware
         var response = new
         {
             statusCode = 404,
-            message = "Route not found"
+            Message = "Route not found",
+            TraceId = context.TraceIdentifier
         };
 
         context.Response.ContentType = "application/json";
