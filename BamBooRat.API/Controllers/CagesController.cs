@@ -1,8 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-
-[ApiController]
-[Route("api/[controller]")]
-public class CagesController : ControllerBase
+public class CagesController : BaseController
 {
     private readonly CageService _cageService;
     public CagesController(CageService cageService)
@@ -13,30 +10,32 @@ public class CagesController : ControllerBase
     public async Task<IActionResult> GetAllCages()
     {
         var cages = await _cageService.GetAllCagesAsync();
-        return Ok(cages);
+        return Ok(new ApiResponse<IEnumerable<CageDto>>(cages));
     }
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetCageById(Guid id)
     {
         var cage = await _cageService.GetCageByIdAsync(id);
-        return Ok(cage);
+        return Ok(new ApiResponse<CageDto>(cage));
     }
     [HttpPost]
-    public async Task<IActionResult> CreateCageAsyn(CreateCageDto dto)
+    public async Task<IActionResult> CreateCageAsync([FromBody] CreateCageDto dto)
     {
         var result = await _cageService.AddCageAsync(dto);
-        return CreatedAtAction(nameof(GetCageById), new { id = result.Id }, result);
+        return CreatedAtAction(nameof(GetCageById),
+       new { id = result.Id },
+       new ApiResponse<CageDto>(result));
     }
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> UpdateCageAsync(Guid id, CreateCageDto dto)
+    public async Task<IActionResult> UpdateCageAsync(Guid id, [FromBody] CreateCageDto dto)
     {
         await _cageService.UpdateAsync(id, dto);
-        return NoContent(); // 204
+        return Ok(new ApiResponse<string>("Updated successfully"));
     }
-    [HttpPost("{id:guid}")]
+    [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteCageAsync(Guid id)
     {
         await _cageService.DeleteAsync(id);
-        return NoContent(); // 204
+        return Ok(new ApiResponse<string>("Updated successfully"));
     }
 }
