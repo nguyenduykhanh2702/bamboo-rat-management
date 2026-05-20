@@ -1,7 +1,6 @@
 public interface ICageRepository
 {
-    Task<List<Cage>> GetAllAsync();
-
+    IQueryable<Cage> Query();
     Task<Cage?> GetByIdAsync(Guid id);
 
     Task AddAsync(Cage cage);

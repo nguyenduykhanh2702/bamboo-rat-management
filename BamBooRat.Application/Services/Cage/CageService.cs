@@ -1,5 +1,6 @@
 using AutoMapper;
 using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
 
 public class CageService
 {
@@ -15,11 +16,6 @@ public class CageService
         _mapper = mapper;
         _validator = validator;
 
-    }
-    public async Task<List<CageDto>> GetAllCagesAsync()
-    {
-        var cages = await _unitOfWork.CageRepository.GetAllAsync();
-        return _mapper.Map<List<CageDto>>(cages);
     }
     public async Task<CageDto> GetCageByIdAsync(Guid id)
     {
@@ -67,6 +63,40 @@ public class CageService
         _unitOfWork.CageRepository.Remove(cage);
         await _unitOfWork.SaveChangesAsync();
     }
+    public async Task<PagedResult<CageDto>> GetPagedResultAsync(PaginationParams paginationParams)
+    {
+        var query = _unitOfWork.CageRepository.Query();
+        //  SEARCH
+        if (!string.IsNullOrWhiteSpace(paginationParams.Search))
+        {
+            var keyword = paginationParams.Search.Trim().ToLower();
+            query = query.Where(x => x.Name.ToLower().Contains(keyword));
+        }
+
+        //  FILTER
+        if (paginationParams.MinCapacity.HasValue)
+        {
+            query = query.Where(x => x.Capacity >= paginationParams.MinCapacity.Value);
+        }
+
+        if (paginationParams.MaxCapacity.HasValue)
+        {
+            query = query.Where(x => x.Capacity <= paginationParams.MaxCapacity.Value);
+        }
+
+        // SORT
+        query = ApplySorting(query, paginationParams.OrderBy);
+
+        var pagedCages = await PaginationHelper.ToPagedResultAsync(query, paginationParams.PageNumber, paginationParams.PageSize);
+        var cageDtos = _mapper.Map<List<CageDto>>(pagedCages.Items);
+        return new PagedResult<CageDto>
+        {
+            Items = cageDtos,
+            TotalCount = pagedCages.TotalCount,
+            PageNumber = pagedCages.PageNumber,
+            PageSize = pagedCages.PageSize
+        };
+    }
 
     private async Task ValidateAsync(CreateCageDto dto)
     {
@@ -93,6 +123,23 @@ public class CageService
                 Message = "Tên chuồng đã tồn tại."
             }
         });
+    }
+
+    private IQueryable<Cage> ApplySorting(IQueryable<Cage> query, string? orderBy)
+    {
+        if (string.IsNullOrWhiteSpace(orderBy))
+            return query.OrderBy(x => x.Name);
+
+        return orderBy.ToLower() switch
+        {
+            "name" => query.OrderBy(x => x.Name),
+            "name desc" => query.OrderByDescending(x => x.Name),
+            "capacity" => query.OrderBy(x => x.Capacity),
+            "capacity desc" => query.OrderByDescending(x => x.Capacity),
+            "createddate" => query.OrderBy(x => x.CreatedDate),
+            "createddate desc" => query.OrderByDescending(x => x.CreatedDate),
+            _ => query.OrderBy(x => x.Name)
+        };
     }
 }
 
