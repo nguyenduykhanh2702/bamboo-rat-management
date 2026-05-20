@@ -30,6 +30,10 @@ public class CageService
     }
     public async Task<CageDto> AddCageAsync(CreateCageDto cageDto)
     {
+        // validate duplicate Name
+        var exists = await _unitOfWork.CageRepository.ExistsByNameAsync(cageDto.Name);
+        if (exists)
+            ThrowDuplicateName();
         await ValidateAsync(cageDto);
         var cage = _mapper.Map<Cage>(cageDto);
         await _unitOfWork.CageRepository.AddAsync(cage);
@@ -38,6 +42,11 @@ public class CageService
     }
     public async Task UpdateAsync(Guid id, CreateCageDto cageDto)
     {
+        // validate duplicate Name
+        var exists = await _unitOfWork.CageRepository.ExistsByNameAsync(cageDto.Name, id);
+        if (exists)
+            ThrowDuplicateName();
+
         await ValidateAsync(cageDto);
 
         var cage = await _unitOfWork.CageRepository.GetByIdAsync(id);
@@ -53,7 +62,7 @@ public class CageService
     {
         var cage = await _unitOfWork.CageRepository.GetByIdAsync(id);
         if (cage == null)
-            throw new Exception("Cage not found");
+            throw new NotFoundException("Không tìm thấy chuồng với ID đã cho");
 
         _unitOfWork.CageRepository.Remove(cage);
         await _unitOfWork.SaveChangesAsync();
@@ -73,6 +82,17 @@ public class CageService
 
             throw new ValidationExceptionCustom(errors);
         }
+    }
+    private void ThrowDuplicateName()
+    {
+        throw new ValidationExceptionCustom(new List<ValidationError>
+        {
+            new ValidationError
+            {
+                Field = "name",
+                Message = "Tên chuồng đã tồn tại."
+            }
+        });
     }
 }
 
