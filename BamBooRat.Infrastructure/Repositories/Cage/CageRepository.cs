@@ -13,6 +13,15 @@ public class CageRepository : ICageRepository
         await _context.AddAsync(cage);
     }
 
+    public async Task<bool> ExistsByNameAsync(string name, Guid? excludeId = null)
+    {
+        var normalized = name.Trim().ToLower();
+
+        return await _context.Cages.AnyAsync(c =>
+            c.Name.ToLower() == normalized &&
+            (!excludeId.HasValue || c.Id != excludeId.Value));
+    }
+
     public async Task<List<Cage>> GetAllAsync()
     {
         return await _context.Cages.ToListAsync();

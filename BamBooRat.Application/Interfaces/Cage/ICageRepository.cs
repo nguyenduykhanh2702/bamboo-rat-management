@@ -9,4 +9,5 @@ public interface ICageRepository
     void Update(Cage cage);
 
     void Remove(Cage cage);
+    Task<bool> ExistsByNameAsync(string name, Guid? excludeId = null);
 }
