@@ -1,6 +1,5 @@
 
 using Microsoft.EntityFrameworkCore;
-
 public class PaginationHelper
 {
     public static async Task<PagedResult<T>> ToPagedResultAsync<T>(

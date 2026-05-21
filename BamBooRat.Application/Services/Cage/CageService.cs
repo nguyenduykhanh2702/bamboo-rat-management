@@ -1,20 +1,19 @@
 using AutoMapper;
 using FluentValidation;
-using Microsoft.AspNetCore.Mvc;
 
-public class CageService
+public class CageService : ICageService
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IValidator<CreateCageDto> _validator;
-
+    private readonly IValidationService _validationService;
     private readonly IMapper _mapper;
+
     public CageService(IUnitOfWork unitOfWork,
      IMapper mapper,
-     IValidator<CreateCageDto> validator)
+     IValidationService validationService)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
-        _validator = validator;
+        _validationService = validationService;
 
     }
     public async Task<CageDto> GetCageByIdAsync(Guid id)
@@ -27,10 +26,15 @@ public class CageService
     public async Task<CageDto> AddCageAsync(CreateCageDto cageDto)
     {
         // validate duplicate Name
+        var errors = new List<ValidationError>();
         var exists = await _unitOfWork.CageRepository.ExistsByNameAsync(cageDto.Name);
         if (exists)
-            ThrowDuplicateName();
-        await ValidateAsync(cageDto);
+        {
+            ValidationHelper.AddError(errors, "name", "Tên chuồng đã tồn tại");
+        }
+
+        ValidationHelper.ThrowIfAny(errors);
+        await _validationService.ValidateAsync(cageDto);
         var cage = _mapper.Map<Cage>(cageDto);
         await _unitOfWork.CageRepository.AddAsync(cage);
         await _unitOfWork.SaveChangesAsync();
@@ -39,12 +43,14 @@ public class CageService
     public async Task UpdateAsync(Guid id, CreateCageDto cageDto)
     {
         // validate duplicate Name
+        var errors = new List<ValidationError>();
         var exists = await _unitOfWork.CageRepository.ExistsByNameAsync(cageDto.Name, id);
         if (exists)
-            ThrowDuplicateName();
-
-        await ValidateAsync(cageDto);
-
+        {
+            ValidationHelper.AddError(errors, CageFields.Name, ErrorMessages.DuplicateRatByName);
+        }
+        ValidationHelper.ThrowIfAny(errors);
+        await _validationService.ValidateAsync(cageDto);
         var cage = await _unitOfWork.CageRepository.GetByIdAsync(id);
         if (cage == null)
             throw new NotFoundException("Không tìm thấy chuồng với ID đã cho");
@@ -63,31 +69,31 @@ public class CageService
         _unitOfWork.CageRepository.Remove(cage);
         await _unitOfWork.SaveChangesAsync();
     }
-    public async Task<PagedResult<CageDto>> GetPagedResultAsync(PaginationParams paginationParams)
+    public async Task<PagedResult<CageDto>> GetPagedResultAsync(CageParams cageParams)
     {
-        var query = _unitOfWork.CageRepository.Query();
+        var query = _unitOfWork.CageRepository.Query().Where(x => x.IsActive);
         //  SEARCH
-        if (!string.IsNullOrWhiteSpace(paginationParams.Search))
+        if (!string.IsNullOrWhiteSpace(cageParams.Search))
         {
-            var keyword = paginationParams.Search.Trim().ToLower();
+            var keyword = cageParams.Search.Trim().ToLower();
             query = query.Where(x => x.Name.ToLower().Contains(keyword));
         }
 
         //  FILTER
-        if (paginationParams.MinCapacity.HasValue)
+        if (cageParams.MinCapacity.HasValue)
         {
-            query = query.Where(x => x.Capacity >= paginationParams.MinCapacity.Value);
+            query = query.Where(x => x.Capacity >= cageParams.MinCapacity.Value);
         }
 
-        if (paginationParams.MaxCapacity.HasValue)
+        if (cageParams.MaxCapacity.HasValue)
         {
-            query = query.Where(x => x.Capacity <= paginationParams.MaxCapacity.Value);
+            query = query.Where(x => x.Capacity <= cageParams.MaxCapacity.Value);
         }
 
         // SORT
-        query = ApplySorting(query, paginationParams.OrderBy);
+        query = CageQueryableExtensions.ApplySorting(query, cageParams.OrderBy);
 
-        var pagedCages = await PaginationHelper.ToPagedResultAsync(query, paginationParams.PageNumber, paginationParams.PageSize);
+        var pagedCages = await PaginationHelper.ToPagedResultAsync(query, cageParams.PageNumber, cageParams.PageSize);
         var cageDtos = _mapper.Map<List<CageDto>>(pagedCages.Items);
         return new PagedResult<CageDto>
         {
@@ -95,50 +101,6 @@ public class CageService
             TotalCount = pagedCages.TotalCount,
             PageNumber = pagedCages.PageNumber,
             PageSize = pagedCages.PageSize
-        };
-    }
-
-    private async Task ValidateAsync(CreateCageDto dto)
-    {
-        var result = await _validator.ValidateAsync(dto);
-
-        if (!result.IsValid)
-        {
-            var errors = result.Errors.Select(e => new ValidationError
-            {
-                Field = e.PropertyName.ToLower(),
-                Message = e.ErrorMessage
-            }).ToList();
-
-            throw new ValidationExceptionCustom(errors);
-        }
-    }
-    private void ThrowDuplicateName()
-    {
-        throw new ValidationExceptionCustom(new List<ValidationError>
-        {
-            new ValidationError
-            {
-                Field = "name",
-                Message = "Tên chuồng đã tồn tại."
-            }
-        });
-    }
-
-    private IQueryable<Cage> ApplySorting(IQueryable<Cage> query, string? orderBy)
-    {
-        if (string.IsNullOrWhiteSpace(orderBy))
-            return query.OrderBy(x => x.Name);
-
-        return orderBy.ToLower() switch
-        {
-            "name" => query.OrderBy(x => x.Name),
-            "name desc" => query.OrderByDescending(x => x.Name),
-            "capacity" => query.OrderBy(x => x.Capacity),
-            "capacity desc" => query.OrderByDescending(x => x.Capacity),
-            "createddate" => query.OrderBy(x => x.CreatedDate),
-            "createddate desc" => query.OrderByDescending(x => x.CreatedDate),
-            _ => query.OrderBy(x => x.Name)
         };
     }
 }

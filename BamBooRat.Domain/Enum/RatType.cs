@@ -1,6 +1,6 @@
 public enum RatType
-{ 
-        Unknown = 0,
+{
+    Unknown = 0,
 
     // Dúi con
     Baby = 1,

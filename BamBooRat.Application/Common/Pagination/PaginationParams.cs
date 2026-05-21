@@ -21,10 +21,6 @@ public class PaginationParams
         }
     }
     public string? Search { get; set; }
-    //  Filter
-    public int? MinCapacity
-    { get; set; }
-    public int? MaxCapacity { get; set; }
 
     // Sort
     public string? OrderBy { get; set; } // "name", "name desc"

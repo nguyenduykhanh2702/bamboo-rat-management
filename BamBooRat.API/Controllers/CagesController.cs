@@ -1,16 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
 public class CagesController : BaseController
 {
-    private readonly CageService _cageService;
-    public CagesController(CageService cageService)
+    private readonly ICageService _cageService;
+    public CagesController(ICageService cageService)
     {
         _cageService = cageService;
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetCagesPaged([FromQuery] PaginationParams paginationParams)
+    public async Task<IActionResult> GetCagesPaged([FromQuery] CageParams cageParams)
     {
-        var pagedResult = await _cageService.GetPagedResultAsync(paginationParams);
+        var pagedResult = await _cageService.GetPagedResultAsync(cageParams);
         return Ok(new ApiResponse<PagedResult<CageDto>>(pagedResult));
     }
 
