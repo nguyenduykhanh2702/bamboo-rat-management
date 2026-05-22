@@ -14,7 +14,6 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Cage.Name));
 
         CreateMap<CreateRatDto, Rat>();
-
         CreateMap<UpdateRatDto, Rat>();
 
         CreateMap<Rat, CreateRatDto>();

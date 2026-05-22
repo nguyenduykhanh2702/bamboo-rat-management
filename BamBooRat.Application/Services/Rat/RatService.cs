@@ -46,11 +46,39 @@ public class RatService : IRatService
         return _mapper.Map<RatDto>(rat);
     }
 
-    public async Task<PagedResult<RatDto>> GetPagedResultAsync(PaginationParams paginationParams)
+    public async Task DeleteAsync(Guid id)
+    {
+        var rat = await _unitOfWork.RatRespository.GetByIdAsync(id);
+        if (rat == null)
+            throw new NotFoundException("Không tìm thấy dúi với ID đã cho");
+        _unitOfWork.RatRespository.Remove(rat);
+        await _unitOfWork.SaveChangesAsync();
+    }
+
+    public async Task<PagedResult<RatDto>> GetPagedResultAsync(RatParams ratParams)
     {
         var query = _unitOfWork.RatRespository.Query();
-
-        var pagedRats = await PaginationHelper.ToPagedResultAsync(query, paginationParams.PageNumber, paginationParams.PageSize);
+        // FILTER
+        if (!string.IsNullOrWhiteSpace(ratParams.Code))
+        {
+            var code = ratParams.Code.Trim().ToUpper();
+            query = query.Where(r => r.Code.ToLower().Contains(code));
+        }
+        if (ratParams.Status != null)
+        {
+            query = query.Where(x => x.Status == ratParams.Status);
+        }
+        if (ratParams.Type != null)
+        {
+            query = query.Where(x => x.Type == ratParams.Type);
+        }
+        if (ratParams.Gender != null)
+        {
+            query = query.Where(x => x.Gender == ratParams.Gender);
+        }
+        // SORT
+        query = RatQueryableExtensions.ApplySorting(query, ratParams.OrderBy);
+        var pagedRats = await PaginationHelper.ToPagedResultAsync(query, ratParams.PageNumber, ratParams.PageSize);
         var ratDtos = _mapper.Map<List<RatDto>>(pagedRats.Items);
         return new PagedResult<RatDto>
         {
@@ -84,5 +112,38 @@ public class RatService : IRatService
         if (rat == null)
             throw new NotFoundException("Không tìm thấy dúi với ID đã cho");
         return rat;
+    }
+
+    public async Task UpdateAsync(Guid id, UpdateRatDto ratDto)
+    {
+        // validate if rat exists
+        var rat = await _unitOfWork.RatRespository.GetByIdAsync(id);
+        if (rat == null)
+            throw new NotFoundException("Không tìm thấy dúi với ID đã cho");
+
+        // validate input
+        await _validationService.ValidateAsync(ratDto);
+
+        // validate duplicate Name and Code
+        var duplicates = await _unitOfWork.RatRespository.GetDuplicateFieldsAsync(ratDto.Name, ratDto.Code, id);
+
+        var errors = new List<ValidationError>();
+
+        if (duplicates.Contains(RatFields.Name))
+        {
+            ValidationHelper.AddError(errors, RatFields.Name, ErrorMessages.DuplicateRatByName);
+        }
+
+        if (duplicates.Contains(RatFields.Code))
+        {
+            ValidationHelper.AddError(errors, RatFields.Code, ErrorMessages.DuplicateRatByCode);
+        }
+
+        ValidationHelper.ThrowIfAny(errors);
+
+        _mapper.Map(ratDto, rat);
+        _unitOfWork.RatRespository.Update(rat);
+        await _unitOfWork.SaveChangesAsync();
+
     }
 }
