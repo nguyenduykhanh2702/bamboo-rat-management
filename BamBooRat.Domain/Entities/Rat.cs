@@ -11,5 +11,5 @@ public class Rat : BaseEntity
 
     public Guid CageId { get; set; }
     public Cage Cage { get; set; } = null;
-    
+
 }

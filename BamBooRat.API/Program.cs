@@ -39,12 +39,22 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Register repositories and services
+
 builder.Services.AddScoped<ICageRepository, CageRepository>();
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-builder.Services.AddScoped<CageService>();
+builder.Services.AddScoped<ICageService, CageService>();
+
+builder.Services.AddScoped<IRatRespository, RatRespository>();
+builder.Services.AddScoped<IRatService, RatService>();
+
 
 // Register FluentValidation validators
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCageValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateRatValidator>();
+
+builder.Services.AddScoped<IValidationService, ValidationService>();
+
+// Register UnitOfWork
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Register AutoMapper
 builder.Services.AddAutoMapper(

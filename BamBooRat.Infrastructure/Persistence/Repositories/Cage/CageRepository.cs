@@ -22,14 +22,13 @@ public class CageRepository : ICageRepository
             (!excludeId.HasValue || c.Id != excludeId.Value));
     }
 
-    public async Task<List<Cage>> GetAllAsync()
-    {
-        return await _context.Cages.ToListAsync();
-    }
-
     public async Task<Cage?> GetByIdAsync(Guid id)
     {
         return await _context.Cages.FindAsync(id);
+    }
+    public IQueryable<Cage> Query()
+    {
+        return _context.Cages.AsQueryable();
     }
 
     public void Remove(Cage cage)
