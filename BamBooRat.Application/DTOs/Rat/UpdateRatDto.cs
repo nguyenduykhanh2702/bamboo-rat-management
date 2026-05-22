@@ -1,6 +1,7 @@
 public class UpdateRatDto
 {
-    public string Name { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
     public string? Description { get; set; }
     public RatType Type { get; set; }
     public RatStatus Status { get; set; }

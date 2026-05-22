@@ -42,6 +42,14 @@ public class CageService : ICageService
     }
     public async Task UpdateAsync(Guid id, CreateCageDto cageDto)
     {
+        // validate exists
+        var cage = await _unitOfWork.CageRepository.GetByIdAsync(id);
+        if (cage == null)
+            throw new NotFoundException("Không tìm thấy chuồng với ID đã cho");
+
+        // validate input
+        await _validationService.ValidateAsync(cageDto);
+
         // validate duplicate Name
         var errors = new List<ValidationError>();
         var exists = await _unitOfWork.CageRepository.ExistsByNameAsync(cageDto.Name, id);
@@ -50,10 +58,6 @@ public class CageService : ICageService
             ValidationHelper.AddError(errors, CageFields.Name, ErrorMessages.DuplicateRatByName);
         }
         ValidationHelper.ThrowIfAny(errors);
-        await _validationService.ValidateAsync(cageDto);
-        var cage = await _unitOfWork.CageRepository.GetByIdAsync(id);
-        if (cage == null)
-            throw new NotFoundException("Không tìm thấy chuồng với ID đã cho");
 
         _mapper.Map(cageDto, cage);
         _unitOfWork.CageRepository.Update(cage);
