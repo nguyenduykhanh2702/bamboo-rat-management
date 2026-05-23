@@ -122,6 +122,20 @@ public class AppDbContext : DbContext
           .HasForeignKey(x => x.CageId)
           .OnDelete(DeleteBehavior.Cascade);
     });
+
+    builder.Entity<Breeding>()
+            .HasOne(b => b.Male)
+            .WithMany(r => r.MaleBreedings)
+            .HasForeignKey(b => b.MaleId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+    builder.Entity<Breeding>()
+          .HasOne(b => b.Female)
+          .WithMany(r => r.FemaleBreedings)
+          .HasForeignKey(b => b.FemaleId)
+          .OnDelete(DeleteBehavior.Restrict);
+
+    builder.Entity<Breeding>().ToTable("Breedings");
   }
   private void UpdateAuditFields()
   {

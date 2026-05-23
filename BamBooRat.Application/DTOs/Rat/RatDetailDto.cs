@@ -4,6 +4,8 @@ public class RatDetailDto
     public string Name { get; set; }
     public string Code { get; set; }
     public string? Description { get; set; }
+    public double Weight { get; set; }
+
     public RatType Type { get; set; }
     public RatStatus Status { get; set; }
     public Gender Gender { get; set; }

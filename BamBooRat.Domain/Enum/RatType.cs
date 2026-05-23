@@ -1,13 +1,11 @@
 public enum RatType
 {
-    Unknown = 0,
-
     // Dúi con
-    Baby = 1,
+    Baby = 0,
 
     // Dúi sinh sản
-    Breeding = 2,
+    Breeding = 1,
 
     // Dúi hậu bị (chuẩn bị sinh sản)
-    Replacement = 3
+    Replacement = 2
 }

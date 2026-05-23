@@ -2,6 +2,7 @@ public class Rat : BaseEntity
 {
     public string Name { get; set; } = string.Empty;
     public string Code { get; set; } = string.Empty;
+    public double Weight { get; set; }
     public string? Description { get; set; }
     public RatType Type { get; set; }
     public RatStatus Status { get; set; }
@@ -11,5 +12,8 @@ public class Rat : BaseEntity
 
     public Guid CageId { get; set; }
     public Cage Cage { get; set; } = null;
+
+    public ICollection<Breeding> MaleBreedings { get; set; } = new List<Breeding>();
+    public ICollection<Breeding> FemaleBreedings { get; set; } = new List<Breeding>();
 
 }
