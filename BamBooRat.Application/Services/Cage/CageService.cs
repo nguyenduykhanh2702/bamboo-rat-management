@@ -32,7 +32,10 @@ public class CageService : ICageService
         {
             ValidationHelper.AddError(errors, "name", "Tên chuồng đã tồn tại");
         }
-
+        if (cageDto.Type == CageType.Breeding && cageDto.Capacity > 1)
+        {
+            ValidationHelper.AddError(errors, "capacity", "Chuồng sinh sản chỉ được 1 con");
+        }
         ValidationHelper.ThrowIfAny(errors);
         await _validationService.ValidateAsync(cageDto);
         var cage = _mapper.Map<Cage>(cageDto);
