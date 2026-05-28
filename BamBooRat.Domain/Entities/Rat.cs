@@ -8,6 +8,8 @@ public class Rat : BaseEntity
     public RatStatus Status { get; set; }
     public Gender Gender { get; set; }
     public DateTime? DateOfBirth { get; set; }
+    public DateTime? LastSeparationDate { get; set; }
+
     public int? Age => DateOfBirth == null ? null : DateTime.UtcNow.Year - DateOfBirth.Value.Year;
 
     public Guid CageId { get; set; }

@@ -22,6 +22,7 @@ public class AppDbContext : DbContext
 
   public DbSet<Cage> Cages { get; set; }
   public DbSet<Rat> Rats { get; set; }
+  public DbSet<Breeding> Breedings { get; set; }
 
   protected override void OnModelCreating(ModelBuilder builder)
   {
@@ -124,16 +125,22 @@ public class AppDbContext : DbContext
     });
 
     builder.Entity<Breeding>()
-            .HasOne(b => b.Male)
-            .WithMany(r => r.MaleBreedings)
-            .HasForeignKey(b => b.MaleId)
-            .OnDelete(DeleteBehavior.Restrict);
+           .HasOne(b => b.Cage)
+           .WithMany()
+           .HasForeignKey(b => b.CageId)
+           .OnDelete(DeleteBehavior.Restrict);
 
     builder.Entity<Breeding>()
-          .HasOne(b => b.Female)
-          .WithMany(r => r.FemaleBreedings)
-          .HasForeignKey(b => b.FemaleId)
-          .OnDelete(DeleteBehavior.Restrict);
+        .HasOne(b => b.Male)
+        .WithMany(r => r.MaleBreedings)
+        .HasForeignKey(b => b.MaleId)
+        .OnDelete(DeleteBehavior.Restrict);
+
+    builder.Entity<Breeding>()
+        .HasOne(b => b.Female)
+        .WithMany(r => r.FemaleBreedings)
+        .HasForeignKey(b => b.FemaleId)
+        .OnDelete(DeleteBehavior.Restrict);
 
     builder.Entity<Breeding>().ToTable("Breedings");
   }

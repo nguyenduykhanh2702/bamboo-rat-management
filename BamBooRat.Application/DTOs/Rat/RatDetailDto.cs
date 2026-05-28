@@ -1,8 +1,8 @@
 public class RatDetailDto
 {
     public Guid Id { get; set; }
-    public string Name { get; set; }
-    public string Code { get; set; }
+    public required string Name { get; set; }
+    public required string Code { get; set; }
     public string? Description { get; set; }
     public double Weight { get; set; }
 
@@ -12,5 +12,5 @@ public class RatDetailDto
     public DateTime? DateOfBirth { get; set; }
     public int? Age { get; set; }
 
-    public CageSimpleDto Cage { get; set; }
+    public CageSimpleDto Cage { get; set; } = null!;
 }

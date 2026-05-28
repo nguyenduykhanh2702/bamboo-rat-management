@@ -41,15 +41,19 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Register repositories and services
 
 builder.Services.AddScoped<ICageRepository, CageRepository>();
-builder.Services.AddScoped<ICageService, CageService>();
-
 builder.Services.AddScoped<IRatRespository, RatRespository>();
-builder.Services.AddScoped<IRatService, RatService>();
+builder.Services.AddScoped<IBreedingRepository, BreedingRepository>();
 
+
+builder.Services.AddScoped<IRatService, RatService>();
+builder.Services.AddScoped<ICageService, CageService>();
+builder.Services.AddScoped<IBreedingService, BreedingService>();
 
 // Register FluentValidation validators
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCageValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateRatValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateBreedingDto>();
+
 
 builder.Services.AddScoped<IValidationService, ValidationService>();
 

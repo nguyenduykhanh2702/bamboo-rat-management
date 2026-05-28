@@ -60,6 +60,12 @@ public class CageService : ICageService
         {
             ValidationHelper.AddError(errors, CageFields.Name, ErrorMessages.DuplicateRatByName);
         }
+        // validate breeding cage capacity
+        if (cageDto.Type == CageType.Breeding && cageDto.Capacity > 1)
+        {
+            ValidationHelper.AddError(errors, "capacity", "Chuồng sinh sản chỉ được 1 con");
+        }
+
         ValidationHelper.ThrowIfAny(errors);
 
         _mapper.Map(cageDto, cage);

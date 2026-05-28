@@ -153,18 +153,16 @@ public class RatService : IRatService
 
         var cage = await _unitOfWork.CageRepository.GetByIdAsync(rat.CageId);
         if (cage == null)
-
-            ValidationHelper.AddError(errors, CageFields.CageId, ErrorMessages.CageNotFound);
+            throw new NotFoundException(ErrorMessages.CageNotFound);
 
         var currentCount = await _unitOfWork.RatRespository.Query()
         .CountAsync(r => r.CageId == rat.CageId);
 
-        // 🐭 Nếu là baby → chỉ check capacity
+        //  if baby, check if cage has adult and capacity
         if (rat.Type == RatType.Baby)
         {
             if (currentCount >= cage.Capacity)
                 ValidationHelper.AddError(errors, CageFields.CageId, ErrorMessages.CageFull);
-            return;
         }
 
         var hasAdult = await _unitOfWork.RatRespository.Query()
@@ -173,7 +171,7 @@ public class RatService : IRatService
         if (rat.Type == RatType.Baby && hasAdult)
             ValidationHelper.AddError(errors, CageFields.CageId, ErrorMessages.CannotMixBaby);
 
-        // 🐭 Nếu là breeding (adult)
+        //  if breeding, check if cage has any other rat
         if (rat.Type == RatType.Breeding)
         {
             if (currentCount >= 1)
