@@ -16,6 +16,12 @@ public class BreedingsController : BaseController
         new { id = result.Id },
         new ApiResponse<BreedingDto>(result));
     }
+    [HttpGet]
+    public async Task<IActionResult> GetBreedingsAsync([FromQuery] BreedingParams param)
+    {
+        var result = await _breedingService.GetBreedingsAsync(param);
+        return Ok(new ApiResponse<PagedResult<BreedingDto>>(result));
+    }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetBreedingById(Guid id)
@@ -30,10 +36,32 @@ public class BreedingsController : BaseController
         await _breedingService.ConFirmBirthAsync(breedingId, dto);
         return Ok(new ApiResponse<string>("Xác nhận sinh sản thành công"));
     }
+
     [HttpPut("{breedingId:guid}/separate")]
     public async Task<IActionResult> SpreatBreedingAsync(Guid breedingId)
     {
         await _breedingService.SpreatBreedingAsync(breedingId);
         return Ok(new ApiResponse<string>("Tách phối thành công"));
+    }
+
+    [HttpPut("{breedingId:guid}/confirm-pregnancy")]
+    public async Task<IActionResult> ConfirmPregnancyAsync(Guid breedingId, [FromBody] ConfirmPregnancyDto dto)
+    {
+        await _breedingService.ConfirmPregnancyAsync(breedingId, dto);
+        return Ok(new ApiResponse<string>("Xác nhận đậu thai thành công"));
+    }
+
+    [HttpPut("{breedingId:guid}/confirm-birth-without-details")]
+    public async Task<IActionResult> ConFirmBirthAsync(Guid breedingId, [FromBody] ConFirmBirthDto dto)
+    {
+        await _breedingService.ConFirmBirthAsync(breedingId, dto);
+        return Ok(new ApiResponse<string>("Xác nhận sinh sản thành công"));
+    }
+
+    [HttpPut("{breedingId:guid}/update-offspring-status")]
+    public async Task<IActionResult> UpdateOffSpringStatusAsync(Guid breedingId, [FromBody] UpdateOffSpringStatusDto dto)
+    {
+        await _breedingService.UpdateOffSpringStatusAsync(breedingId, dto);
+        return Ok(new ApiResponse<string>("Cập nhật trạng thái con cái thành công"));
     }
 }

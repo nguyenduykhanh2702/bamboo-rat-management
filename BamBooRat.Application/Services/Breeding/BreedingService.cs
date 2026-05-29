@@ -1,7 +1,4 @@
-
-using System.Xml;
 using AutoMapper;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 
 public class BreedingService : IBreedingService
@@ -17,6 +14,16 @@ public class BreedingService : IBreedingService
         _mapper = mapper;
         _validationService = validationService;
     }
+    /// <summary>
+    /// Xác nhận kết quả mang thai của quá trình phối. 
+    /// Khi xác nhận có mang thai, quá trình phối sẽ được đánh dấu là "Đã mang thai". 
+    /// Khi xác nhận không mang thai, quá trình phối sẽ được đánh dấu là "Thất bại".
+    /// Quá trình phối chỉ có thể xác nhận kết quả mang thai khi đã tách (đạt đến ngày tách hoặc đã thực hiện tách thủ công).
+    /// </summary>
+    /// <param name="breedingId"></param>
+    /// <param name="dto"></param>
+    /// <returns></returns>
+    /// <exception cref="NotFoundException"></exception>
     public async Task ConfirmPregnancyAsync(Guid breedingId, ConfirmPregnancyDto dto)
     {
         var breeding = await _unitOfWork.BreedingRepository.Query()
@@ -43,7 +50,15 @@ public class BreedingService : IBreedingService
         _unitOfWork.BreedingRepository.Update(breeding);
         await _unitOfWork.SaveChangesAsync();
     }
-
+    /// <summary>
+    /// Xác nhận kết quả sinh sản của quá trình phối. 
+    /// Khi xác nhận có đẻ, quá trình phối sẽ được cập nhật các thông tin về ngày sinh thực tế, 
+    /// số lượng con đẻ và được đánh dấu là "Đã đẻ thành công".
+    /// </summary>
+    /// <param name="breedingId"></param>
+    /// <param name="dto"></param>
+    /// <returns></returns>
+    /// <exception cref="NotFoundException"></exception>
     public async Task ConFirmBirthAsync(Guid breedingId, ConFirmBirthDto dto)
     {
         var breeding = await _unitOfWork.BreedingRepository.Query().
@@ -67,8 +82,7 @@ public class BreedingService : IBreedingService
         {
             breeding.ActualBirthDate = dto.ActualBirthDate;
             breeding.OffspringCount = dto.OffspringCount;
-            breeding.IsOffspringSurvived = dto.IsOffspringSurvived;
-            breeding.BreedingStatus = BreedingStatus.Completed;
+            breeding.BreedingStatus = BreedingStatus.BirthSuccessful;
         }
         else
         {
@@ -78,6 +92,12 @@ public class BreedingService : IBreedingService
         await _unitOfWork.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Tạo quá trình phối mới giữa con đực và con cái. Quá trình này sẽ thực hiện các bước sau:
+    /// </summary>
+    /// <param name="dto"></param>
+    /// <returns></returns>
+    /// <exception cref="NotFoundException"></exception>
     public async Task<BreedingDto> CreateBreedingAsync(CreateBreedingDto dto)
     {
         await _validationService.ValidateAsync(dto);
@@ -137,6 +157,12 @@ public class BreedingService : IBreedingService
         return _mapper.Map<BreedingDto>(breeding);
     }
 
+    /// <summary>
+    /// Lấy thông tin chi tiết của một quá trình phối dựa trên ID. Thông tin trả về sẽ bao gồm:
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns> </returns>
+    /// <exception cref="NotFoundException"></exception>
     public async Task<BreedingDto> GetBreedingByIdAsync(Guid id)
     {
         var breeding = await _unitOfWork.BreedingRepository.Query().Where(x => x.Id == id).Select(x => new BreedingDto
@@ -169,6 +195,14 @@ public class BreedingService : IBreedingService
         return breeding;
     }
 
+    /// <summary>
+    /// Tách quá trình phối khi đã đạt đến ngày tách hoặc khi muốn tách thủ công trước thời điểm tách dự kiến. 
+    /// Khi tách quá trình phối, con cái sẽ được chuyển về chuồng cũ và quá trình phối sẽ được đánh dấu là đã tách.
+    /// Quá trình phối chỉ có thể tách khi đang trong trạng thái phối và chưa xác nhận kết quả mang thai.
+    /// </summary>
+    /// <param name="breedingId"></param>
+    /// <returns></returns>
+    /// <exception cref="NotFoundException"></exception>
     public async Task SpreatBreedingAsync(Guid breedingId)
     {
         var breeding = await _unitOfWork.BreedingRepository.Query()
@@ -316,8 +350,104 @@ public class BreedingService : IBreedingService
 
     }
 
-    public Task CancelBreedingAsync(Guid breedingId)
+    /// <summary>
+    /// Hủy bỏ một quá trình phối đang diễn ra. Khi hủy bỏ quá trình phối, 
+    /// con cái sẽ được chuyển về chuồng cũ và quá trình phối sẽ được đánh dấu là đã hủy.
+    /// </summary>
+    /// <param name="breedingId"></param>
+    /// <returns></returns>
+    /// <exception cref="NotImplementedException"></exception>
+    public async Task CancelBreedingAsync(Guid breedingId)
     {
-        throw new NotImplementedException();
+        var breeding = await _unitOfWork.BreedingRepository.Query().
+                Where(x => x.Id == breedingId).Include(x => x.Female)
+                        .FirstOrDefaultAsync();
+
+        if (breeding == null)
+            throw new NotFoundException("Không tìm thấy quá trình phối với ID đã cho");
+        var femaleOldCage = await _unitOfWork.CageRepository.GetByIdAsync(breeding.FemaleOldCageId);
+
+        if (femaleOldCage == null)
+            throw new NotFoundException("Không tìm thấy chuồng cũ của con cái");
+
+        var errors = new List<ValidationError>();
+        if (breeding.BreedingStatus != BreedingStatus.Breeding)
+            ValidationHelper.AddError(errors, "BreedingStatus", "Chỉ có thể hủy khi đang trong quá trình phối"); femaleOldCage.Id = breeding.FemaleOldCageId;
+        ValidationHelper.ThrowIfAny(errors);
+
+        breeding.Female.CageId = breeding.FemaleOldCageId;
+        femaleOldCage.IsLocked = false;
+        breeding.BreedingStatus = BreedingStatus.Cancelled;
+
+        _unitOfWork.BreedingRepository.Update(breeding);
+        await _unitOfWork.SaveChangesAsync();
+
+    }
+    /// <summary>
+    /// Cập nhật tình trạng sống sót của con non sau khi đã xác nhận đẻ thành công.
+    /// </summary>
+    /// <param name="breedingId"></param>
+    /// <param name="dto"></param>
+    /// <returns></returns>
+    /// <exception cref="NotFoundException"></exception>
+    public async Task UpdateOffSpringStatusAsync(Guid breedingId, UpdateOffSpringStatusDto dto)
+    {
+        var breeding = await _unitOfWork.BreedingRepository.Query().Where(x => x.Id == breedingId)
+                        .FirstOrDefaultAsync();
+        if (breeding == null)
+            throw new NotFoundException("Không tìm thấy quá trình phối với ID đã cho");
+
+        var errors = new List<ValidationError>();
+
+        if (breeding.BreedingStatus != BreedingStatus.BirthSuccessful)
+            ValidationHelper.AddError(errors, "BreedingStatus", "Chỉ có thể cập nhật tình trạng con non khi đã xác nhận đẻ thành công");
+        ValidationHelper.ThrowIfAny(errors);
+        if (dto.IsOffspringSurvived)
+        {
+            breeding.BreedingStatus = BreedingStatus.OffspringAlive;
+        }
+        else
+        {
+            breeding.BreedingStatus = BreedingStatus.OffspringDead;
+        }
+
+        _unitOfWork.BreedingRepository.Update(breeding);
+        await _unitOfWork.SaveChangesAsync();
+    }
+
+    public async Task<PagedResult<BreedingDto>> GetBreedingsAsync(BreedingParams breedingParams)
+    {
+        var query = _unitOfWork.BreedingRepository.Query();
+        if (!string.IsNullOrEmpty(breedingParams.Search))
+        {
+            var search = breedingParams.Search.Trim().ToLower();
+            query = query.Where(x =>
+                    x.Female.Code.ToLower().Contains(search) ||
+                    x.Male.Code.ToLower().Contains(search) ||
+                    x.Cage.Name.ToLower().Contains(search));
+        }
+        if (breedingParams.Status.HasValue)
+        {
+            query = query.Where(x => x.BreedingStatus == breedingParams.Status.Value);
+        }
+        if (breedingParams.FromDate.HasValue)
+        {
+            query = query.Where(x =>
+                x.StartDate >= breedingParams.FromDate.Value);
+        }
+        if (breedingParams.ToDate.HasValue)
+        {
+            query = query.Where(x =>
+                x.StartDate <= breedingParams.ToDate.Value);
+        }
+        var pageBreeding = await PaginationHelper.ToPagedResultAsync(query, breedingParams.PageNumber, breedingParams.PageSize);
+        var breedingDto = _mapper.Map<List<BreedingDto>>(pageBreeding.Items);
+        return new PagedResult<BreedingDto>
+        {
+            Items = breedingDto,
+            TotalCount = pageBreeding.TotalCount,
+            PageNumber = pageBreeding.PageNumber,
+            PageSize = pageBreeding.PageSize
+        };
     }
 }
