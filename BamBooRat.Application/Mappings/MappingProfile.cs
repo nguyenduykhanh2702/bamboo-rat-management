@@ -23,5 +23,8 @@ public class MappingProfile : Profile
            .ForMember(dest => dest.MaleCode, opt => opt.MapFrom(src => src.Male.Code))
            .ForMember(dest => dest.FemaleCode, opt => opt.MapFrom(src => src.Female.Code))
            .ForMember(dest => dest.CageName, opt => opt.MapFrom(src => src.Cage.Name));
+
+        CreateMap<ConFirmBirthDto, Breeding>();
+
     }
 }

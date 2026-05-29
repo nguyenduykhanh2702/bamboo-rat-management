@@ -27,6 +27,8 @@ public class AppDbContext : DbContext
   protected override void OnModelCreating(ModelBuilder builder)
   {
     base.OnModelCreating(builder);
+    // Global query filter for soft delete
+    builder.Entity<Breeding>().HasQueryFilter(u => !u.IsDeleted);
 
     // Cage configuration
     builder.Entity<Cage>(entity =>

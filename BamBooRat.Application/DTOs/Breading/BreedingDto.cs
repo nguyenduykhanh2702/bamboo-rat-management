@@ -7,7 +7,7 @@ public class BreedingDto
 
     public Guid FemaleId { get; set; }
     public string? FemaleCode { get; set; }
-
+    public Guid FemaleOldCageId { get; set; }
     public Guid CageId { get; set; }
     public string? CageName { get; set; }
 
@@ -21,6 +21,6 @@ public class BreedingDto
 
     public bool? IsBirthSuccessful { get; set; }
     public int? OffspringCount { get; set; }
-
-    public BreedingStatus Status { get; set; }
+    public bool? IsOffspringSurvived { get; set; }
+    public BreedingStatus BreedingStatus { get; set; }
 }

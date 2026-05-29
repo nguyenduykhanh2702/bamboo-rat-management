@@ -1,16 +1,16 @@
-public class Breeding : BaseEntity
+public class Breeding : BaseEntity, ISoftDeletable
 {
     public Guid MaleId { get; set; }
-    public Rat Male { get; set; }
+    public Rat Male { get; set; } = null!;
 
     public Guid FemaleId { get; set; }
-    public Rat Female { get; set; }
+    public Rat Female { get; set; } = null!;
 
     public Guid CageId { get; set; }
-    public Cage Cage { get; set; }
+    public Cage Cage { get; set; } = null!;
 
     public Guid FemaleOldCageId { get; set; }
-    public Cage FemaleOldCage { get; set; }
+    public Cage FemaleOldCage { get; set; } = null!;
 
     public DateTime StartDate { get; set; }
 
@@ -29,4 +29,5 @@ public class Breeding : BaseEntity
     public string? Notes { get; set; }
 
     public BreedingStatus BreedingStatus { get; set; } = BreedingStatus.Breeding;
+    public bool IsDeleted { get; set; }
 }

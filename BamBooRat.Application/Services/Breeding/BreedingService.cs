@@ -1,5 +1,7 @@
 
+using System.Xml;
 using AutoMapper;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 
 public class BreedingService : IBreedingService
@@ -15,6 +17,67 @@ public class BreedingService : IBreedingService
         _mapper = mapper;
         _validationService = validationService;
     }
+    public async Task ConfirmPregnancyAsync(Guid breedingId, ConfirmPregnancyDto dto)
+    {
+        var breeding = await _unitOfWork.BreedingRepository.Query()
+                        .FirstOrDefaultAsync(x => x.Id == breedingId);
+        if (breeding == null)
+            throw new NotFoundException("Không tìm thấy quá trình phối");
+
+        var errors = new List<ValidationError>();
+        if (breeding.BreedingStatus != BreedingStatus.Separated)
+        {
+            ValidationHelper.AddError(errors, "BreedingStatus", "Chỉ có thể xác nhận có đẻ khi đã tách");
+            ValidationHelper.ThrowIfAny(errors);
+        }
+        // Xác nhận dúi cái đã mang thai
+        if (dto.IsPregnant)
+        {
+            breeding.BreedingStatus = BreedingStatus.Pregnant;
+        }
+        else
+        {
+            breeding.BreedingStatus = BreedingStatus.Failed;
+        }
+
+        _unitOfWork.BreedingRepository.Update(breeding);
+        await _unitOfWork.SaveChangesAsync();
+    }
+
+    public async Task ConFirmBirthAsync(Guid breedingId, ConFirmBirthDto dto)
+    {
+        var breeding = await _unitOfWork.BreedingRepository.Query().
+                        FirstOrDefaultAsync(x => x.Id == breedingId);
+        if (breeding == null)
+            throw new NotFoundException("Không tìm thấy quá trình phối");
+
+        var errors = new List<ValidationError>();
+        if (dto.IsBirthSuccessful)
+        {
+            if (!dto.ActualBirthDate.HasValue)
+                ValidationHelper.AddError(errors, "ActualBirthDate", "Ngày sinh thực tế là bắt buộc khi xác nhận có đẻ");
+            if (!dto.OffspringCount.HasValue)
+                ValidationHelper.AddError(errors, "OffspringCount", "Số lượng con đẻ là bắt buộc khi xác nhận có đẻ");
+            if (dto.OffspringCount <= 0)
+                ValidationHelper.AddError(errors, "OffspringCount", "Số lượng con đẻ phải lớn hơn 0");
+        }
+        ValidationHelper.ThrowIfAny(errors);
+        breeding.IsBirthSuccessful = dto.IsBirthSuccessful;
+        if (dto.IsBirthSuccessful)
+        {
+            breeding.ActualBirthDate = dto.ActualBirthDate;
+            breeding.OffspringCount = dto.OffspringCount;
+            breeding.IsOffspringSurvived = dto.IsOffspringSurvived;
+            breeding.BreedingStatus = BreedingStatus.Completed;
+        }
+        else
+        {
+            breeding.BreedingStatus = BreedingStatus.Failed;
+        }
+        _unitOfWork.BreedingRepository.Update(breeding);
+        await _unitOfWork.SaveChangesAsync();
+    }
+
     public async Task<BreedingDto> CreateBreedingAsync(CreateBreedingDto dto)
     {
         await _validationService.ValidateAsync(dto);
@@ -37,7 +100,110 @@ public class BreedingService : IBreedingService
         if (femaleOldCage == null)
             throw new NotFoundException("Không tìm thấy chuồng con cái");
 
+        // Validate input
+        await ValidateBreeding(female, male, now, femaleOldCage);
 
+        var expectedBirthDate = dto.StartDate.AddDays(BreedingRules.PregnancyDays);
+
+        var expectedSeparationDate = dto.StartDate.AddDays(BreedingRules.SeparationDays);
+        // 3. Tạo Breeding
+        var breeding = new Breeding
+        {
+            MaleId = male.Id,
+            FemaleId = female.Id,
+
+            CageId = maleCage.Id,
+            FemaleOldCageId = femaleOldCage.Id,
+
+            ExpectedBirthDate = expectedBirthDate,
+            ExpectedSeparationDate = expectedSeparationDate,
+
+            StartDate = dto.StartDate,
+            CreatedDate = now,
+            BreedingStatus = BreedingStatus.Breeding,
+            IsBirthSuccessful = null,
+            IsOffspringSurvived = null,
+            ActualBirthDate = null,
+            OffspringCount = null
+        };
+
+        femaleOldCage.IsLocked = true;
+        // chuyển con cái sang cage phối(chuồng của con đực)
+        female.CageId = maleCage.Id;
+
+        await _unitOfWork.BreedingRepository.AddAsync(breeding);
+        //  Save
+        await _unitOfWork.SaveChangesAsync();
+        return _mapper.Map<BreedingDto>(breeding);
+    }
+
+    public async Task<BreedingDto> GetBreedingByIdAsync(Guid id)
+    {
+        var breeding = await _unitOfWork.BreedingRepository.Query().Where(x => x.Id == id).Select(x => new BreedingDto
+        {
+            Id = x.Id,
+            MaleId = x.MaleId,
+            MaleCode = x.Male.Code,
+
+            CageId = x.CageId,
+            CageName = x.Cage.Name,
+
+            FemaleId = x.FemaleId,
+            FemaleOldCageId = x.FemaleOldCageId,
+            FemaleCode = x.Female.Code,
+
+            StartDate = x.StartDate,
+            ExpectedBirthDate = x.ExpectedBirthDate,
+            ExpectedSeparationDate = x.ExpectedSeparationDate,
+
+            BreedingStatus = x.BreedingStatus,
+
+            IsBirthSuccessful = x.IsBirthSuccessful,
+            IsOffspringSurvived = x.IsOffspringSurvived,
+            ActualBirthDate = x.ActualBirthDate,
+            OffspringCount = x.OffspringCount
+
+        }).FirstOrDefaultAsync();
+        if (breeding == null)
+            throw new NotFoundException("Không tìm thấy quá trình phối với ID đã cho");
+        return breeding;
+    }
+
+    public async Task SpreatBreedingAsync(Guid breedingId)
+    {
+        var breeding = await _unitOfWork.BreedingRepository.Query()
+        .Include(x => x.Female)
+        .Include(x => x.Male)
+        .FirstOrDefaultAsync(x => x.Id == breedingId);
+
+        if (breeding == null)
+            throw new NotFoundException("Không tìm thấy quá trình phối với ID đã cho");
+
+        var errors = new List<ValidationError>();
+        if (breeding.BreedingStatus != BreedingStatus.Breeding)
+            ValidationHelper.AddError(errors, "BreedingStatus", "Chỉ có thể tách khi đang trong quá trình phối");
+
+        breeding.Female.CageId = breeding.FemaleOldCageId;
+
+        var femaleOldCage = await _unitOfWork.CageRepository.GetByIdAsync(breeding.FemaleOldCageId);
+
+        if (femaleOldCage == null)
+            throw new NotFoundException("Không tìm thấy chuồng cũ của con cái");
+
+        femaleOldCage.IsLocked = false;
+
+        breeding.ActualSeparationDate = DateTime.UtcNow;
+
+        breeding.BreedingStatus = BreedingStatus.Separated;
+
+        _unitOfWork.BreedingRepository.Update(breeding);
+        await _unitOfWork.SaveChangesAsync();
+
+    }
+
+    private async Task ValidateBreeding(Rat female, Rat male, DateTime now, Cage femaleOldCage)
+    {
+        now = DateTime.UtcNow;
         var errors = new List<ValidationError>();
 
         if (male.Gender != Gender.Male)
@@ -46,10 +212,8 @@ public class BreedingService : IBreedingService
         if (female.Gender != Gender.Female)
             ValidationHelper.AddError(errors, "Female", "Phải là dúi cái");
 
-
         if (male.Id == female.Id)
             ValidationHelper.AddError(errors, "Breeding", "Không thể phối cùng 1 con");
-
 
         if (male.Weight < 1.3)
             ValidationHelper.AddError(errors, "Weight", "Con đực cần phối không được dưới 1.3 kg");
@@ -150,52 +314,9 @@ public class BreedingService : IBreedingService
         if (errors.Any())
             ValidationHelper.ThrowIfAny(errors);
 
-
-        var expectedBirthDate = dto.StartDate.AddDays(BreedingRules.PregnancyDays);
-
-        var expectedSeparationDate = dto.StartDate.AddDays(BreedingRules.SeparationDays);
-        // 3. Tạo Breeding
-        var breeding = new Breeding
-        {
-            MaleId = male.Id,
-            FemaleId = female.Id,
-
-            CageId = maleCage.Id,
-            FemaleOldCageId = femaleOldCage.Id,
-
-            ExpectedBirthDate = expectedBirthDate,
-            ExpectedSeparationDate = expectedSeparationDate,
-
-            StartDate = dto.StartDate,
-            CreatedDate = now,
-            BreedingStatus = BreedingStatus.Breeding,
-            IsBirthSuccessful = null,
-            IsOffspringSurvived = null,
-            ActualBirthDate = null,
-            OffspringCount = null
-        };
-
-        femaleOldCage.IsLocked = true;
-        await _unitOfWork.BreedingRepository.AddAsync(breeding);
-
-        // chuyển con cái sang cage phối(chuồng của con đực)
-        female.CageId = maleCage.Id;
-        // 5. Save
-        await _unitOfWork.SaveChangesAsync();
-        return _mapper.Map<BreedingDto>(breeding);
     }
 
-    public Task DeleteAsync(Guid id)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<BreedingDto> GetBreedingByIdAsync(Guid id)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task UpdateAsync(Guid id, CreateBreedingDto dto)
+    public Task CancelBreedingAsync(Guid breedingId)
     {
         throw new NotImplementedException();
     }

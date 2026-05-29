@@ -23,4 +23,17 @@ public class BreedingsController : BaseController
         var breeding = await _breedingService.GetBreedingByIdAsync(id);
         return Ok(new ApiResponse<BreedingDto>(breeding));
     }
+
+    [HttpPut("{breedingId:guid}/confirm-birth")]
+    public async Task<IActionResult> ConFirmBirthAsync([FromBody] ConFirmBirthDto dto, Guid breedingId)
+    {
+        await _breedingService.ConFirmBirthAsync(breedingId, dto);
+        return Ok(new ApiResponse<string>("Xác nhận sinh sản thành công"));
+    }
+    [HttpPut("{breedingId:guid}/separate")]
+    public async Task<IActionResult> SpreatBreedingAsync(Guid breedingId)
+    {
+        await _breedingService.SpreatBreedingAsync(breedingId);
+        return Ok(new ApiResponse<string>("Tách phối thành công"));
+    }
 }

@@ -4,5 +4,6 @@ public enum BreedingStatus
     Pregnant,       // đã đậu
     WaitingBirth,   // gần đẻ
     Completed,      // xong
-    Failed          // thất bại
+    Failed,          // thất bại
+    Separated       // đã tách
 }

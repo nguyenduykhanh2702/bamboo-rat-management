@@ -13,7 +13,7 @@ public class Rat : BaseEntity
     public int? Age => DateOfBirth == null ? null : DateTime.UtcNow.Year - DateOfBirth.Value.Year;
 
     public Guid CageId { get; set; }
-    public Cage Cage { get; set; } = null;
+    public Cage Cage { get; set; } = null!;
 
     public ICollection<Breeding> MaleBreedings { get; set; } = new List<Breeding>();
     public ICollection<Breeding> FemaleBreedings { get; set; } = new List<Breeding>();
