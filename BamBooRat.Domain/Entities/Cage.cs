@@ -11,4 +11,8 @@ public class Cage : BaseEntity
     public CageType Type { get; set; }
 
     public ICollection<Rat> Rats { get; set; } = new List<Rat>();
+
+    public ICollection<CageTransfer> OutgoingTransfers { get; set; } = new List<CageTransfer>();
+
+    public ICollection<CageTransfer> IncomingTransfers { get; set; } = new List<CageTransfer>();
 }

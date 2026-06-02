@@ -6,13 +6,16 @@ public class BreedingService : IBreedingService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly IValidationService _validationService;
+    private readonly ICageTransferService _cageTransferService;
     public BreedingService(IUnitOfWork unitOfWork,
                 IMapper mapper,
-                IValidationService validationService)
+                IValidationService validationService,
+                ICageTransferService cageTransferService)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _validationService = validationService;
+        _cageTransferService = cageTransferService;
     }
     /// <summary>
     /// Xác nhận kết quả mang thai của quá trình phối. 
@@ -88,6 +91,7 @@ public class BreedingService : IBreedingService
         {
             breeding.BreedingStatus = BreedingStatus.Failed;
         }
+        breeding.Notes = dto.Notes;
         _unitOfWork.BreedingRepository.Update(breeding);
         await _unitOfWork.SaveChangesAsync();
     }
@@ -152,6 +156,8 @@ public class BreedingService : IBreedingService
         female.CageId = maleCage.Id;
 
         await _unitOfWork.BreedingRepository.AddAsync(breeding);
+
+        await _cageTransferService.CreateAsync(female.Id, femaleOldCage.Id, maleCage.Id, now);
         //  Save
         await _unitOfWork.SaveChangesAsync();
         return _mapper.Map<BreedingDto>(breeding);
@@ -298,16 +304,16 @@ public class BreedingService : IBreedingService
 
         if (lastBreeding != null)
         {
-            // Chưa biết có đẻ hay không
-            if (lastBreeding.IsBirthSuccessful == null)
-            {
-                var days = (now - lastBreeding.StartDate).TotalDays;
+            // // Chưa biết có đẻ hay không
+            // if (lastBreeding.IsBirthSuccessful == null)
+            // {
+            //     var days = (now - lastBreeding.StartDate).TotalDays;
 
-                if (days < BreedingRules.FemaleCheckBirthDays)
-                    ValidationHelper.AddError(errors, "Female", "Chưa đến thời điểm xác định có đẻ hay không");
-            }
+            //     if (days < BreedingRules.FemaleCheckBirthDays)
+            //         ValidationHelper.AddError(errors, "Female", "Chưa đến thời điểm xác định có đẻ hay không");
+            // }
             //  Có đẻ
-            if (lastBreeding.IsBirthSuccessful == true && lastBreeding.ActualBirthDate.HasValue)
+            if (lastBreeding.BreedingStatus == BreedingStatus.BirthSuccessful && lastBreeding.ActualBirthDate.HasValue)
             {
                 var days = (now - lastBreeding.ActualBirthDate.Value).TotalDays;
 
@@ -321,7 +327,7 @@ public class BreedingService : IBreedingService
                 }
 
                 //  Đẻ nhưng con chết nghỉ ngắn (15 ngày)
-                if (lastBreeding.IsOffspringSurvived == false)
+                if (lastBreeding.BreedingStatus == BreedingStatus.OffspringDead)
                 {
                     if (days < BreedingRules.FemaleRetryAfterLossDays)
                         ValidationHelper.AddError(errors, "Female", "Chưa đủ thời gian phối lại sau khi mất con");
@@ -420,11 +426,11 @@ public class BreedingService : IBreedingService
         var query = _unitOfWork.BreedingRepository.Query();
         if (!string.IsNullOrEmpty(breedingParams.Search))
         {
-            var search = breedingParams.Search.Trim().ToLower();
+            var keyword = breedingParams.Search.Trim().ToLower();
             query = query.Where(x =>
-                    x.Female.Code.ToLower().Contains(search) ||
-                    x.Male.Code.ToLower().Contains(search) ||
-                    x.Cage.Name.ToLower().Contains(search));
+                    x.Female.Code.ToLower().Contains(keyword) ||
+                    x.Male.Code.ToLower().Contains(keyword) ||
+                    x.Cage.Name.ToLower().Contains(keyword));
         }
         if (breedingParams.Status.HasValue)
         {

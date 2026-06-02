@@ -26,5 +26,25 @@ public class MappingProfile : Profile
 
         CreateMap<ConFirmBirthDto, Breeding>();
 
+        CreateMap<CageTransfer, CageTransferDto>()
+            .ForMember(
+                dest => dest.RatCode,
+                opt => opt.MapFrom(src => src.Rat.Code))
+
+            .ForMember(
+                dest => dest.RatName,
+                opt => opt.MapFrom(src => src.Rat.Name))
+
+            .ForMember(
+                dest => dest.FromCageName,
+                opt => opt.MapFrom(src =>
+                    src.FromCage != null
+                        ? src.FromCage.Name
+                        : null))
+
+            .ForMember(
+                dest => dest.ToCageName,
+                opt => opt.MapFrom(src => src.ToCage.Name));
+
     }
 }

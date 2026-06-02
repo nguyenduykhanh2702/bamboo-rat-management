@@ -6,15 +6,20 @@ public class UnitOfWork : IUnitOfWork
     public IRatRespository RatRespository { get; }
     public IBreedingRepository BreedingRepository { get; }
 
+    public ICageTransferRespository CageTransferRespository { get; }
+
     public UnitOfWork(AppDbContext context,
                     ICageRepository cageRepository,
                     IRatRespository ratRepository,
-                    IBreedingRepository breedingRepository)
+                    IBreedingRepository breedingRepository,
+                    ICageTransferRespository cageTransferRespository)
     {
         _context = context;
         CageRepository = cageRepository;
         RatRespository = ratRepository;
         BreedingRepository = breedingRepository;
+        CageTransferRespository = cageTransferRespository;
+
     }
 
     public async Task<int> SaveChangesAsync()

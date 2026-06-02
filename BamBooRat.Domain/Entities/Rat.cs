@@ -18,4 +18,6 @@ public class Rat : BaseEntity
     public ICollection<Breeding> MaleBreedings { get; set; } = new List<Breeding>();
     public ICollection<Breeding> FemaleBreedings { get; set; } = new List<Breeding>();
 
+    public ICollection<CageTransfer> CageTransfers { get; set; } = new List<CageTransfer>();
+
 }

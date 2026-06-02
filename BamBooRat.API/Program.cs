@@ -56,11 +56,13 @@ builder.Services.AddSingleton<SoftDeleteInterceptor>();
 builder.Services.AddScoped<ICageRepository, CageRepository>();
 builder.Services.AddScoped<IRatRespository, RatRespository>();
 builder.Services.AddScoped<IBreedingRepository, BreedingRepository>();
+builder.Services.AddScoped<ICageTransferRespository, CageTransferRespository>();
 
 
 builder.Services.AddScoped<IRatService, RatService>();
 builder.Services.AddScoped<ICageService, CageService>();
 builder.Services.AddScoped<IBreedingService, BreedingService>();
+builder.Services.AddScoped<ICageTransferService, CageTransferService>();
 
 // Register FluentValidation validators
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCageValidator>();
