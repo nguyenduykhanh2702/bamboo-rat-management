@@ -35,21 +35,40 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 //builder.Services.AddOpenApi();
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+// builder.Services.AddDbContext<AppDbContext>(options =>
+//     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+
+builder.Services.AddDbContext<AppDbContext>(
+    (serviceProvider, options) => options
+        .UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+        .AddInterceptors(
+            serviceProvider
+                .GetRequiredService<SoftDeleteInterceptor>()
+        )
+);
+
+// soft delete interceptor
+builder.Services.AddSingleton<SoftDeleteInterceptor>();
+
 
 // Register repositories and services
-
 builder.Services.AddScoped<ICageRepository, CageRepository>();
-builder.Services.AddScoped<ICageService, CageService>();
-
 builder.Services.AddScoped<IRatRespository, RatRespository>();
-builder.Services.AddScoped<IRatService, RatService>();
+builder.Services.AddScoped<IBreedingRepository, BreedingRepository>();
+builder.Services.AddScoped<ICageTransferRespository, CageTransferRespository>();
 
+
+builder.Services.AddScoped<IRatService, RatService>();
+builder.Services.AddScoped<ICageService, CageService>();
+builder.Services.AddScoped<IBreedingService, BreedingService>();
+builder.Services.AddScoped<ICageTransferService, CageTransferService>();
 
 // Register FluentValidation validators
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCageValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateRatValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateBreedingDto>();
+
 
 builder.Services.AddScoped<IValidationService, ValidationService>();
 

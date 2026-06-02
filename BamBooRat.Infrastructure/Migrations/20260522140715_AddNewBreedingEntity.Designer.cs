@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BamBooRat.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260522140715_AddNewBreedingEntity")]
+    partial class AddNewBreedingEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,11 +33,8 @@ namespace BamBooRat.Infrastructure.Migrations
                     b.Property<DateTime?>("ActualBirthDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("ActualSeparationDate")
+                    b.Property<DateTime>("BreedingDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<int>("BreedingStatus")
-                        .HasColumnType("int");
 
                     b.Property<Guid>("CageId")
                         .HasColumnType("uniqueidentifier");
@@ -42,26 +42,11 @@ namespace BamBooRat.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("ExpectedBirthDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("ExpectedSeparationDate")
+                    b.Property<DateTime?>("ExpectedBirthDate")
                         .HasColumnType("datetime2");
 
                     b.Property<Guid>("FemaleId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("FemaleOldCageId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool?>("IsBirthSuccessful")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<bool?>("IsOffspringSurvived")
-                        .HasColumnType("bit");
 
                     b.Property<Guid>("MaleId")
                         .HasColumnType("uniqueidentifier");
@@ -72,8 +57,8 @@ namespace BamBooRat.Infrastructure.Migrations
                     b.Property<int?>("OffspringCount")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
+                    b.Property<Guid?>("OriginalFemaleCageId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime2");
@@ -83,8 +68,6 @@ namespace BamBooRat.Infrastructure.Migrations
                     b.HasIndex("CageId");
 
                     b.HasIndex("FemaleId");
-
-                    b.HasIndex("FemaleOldCageId");
 
                     b.HasIndex("MaleId");
 
@@ -120,17 +103,11 @@ namespace BamBooRat.Infrastructure.Migrations
                         .HasDefaultValue(true)
                         .HasColumnName("IsActive");
 
-                    b.Property<bool>("IsLocked")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("Name");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime2")
@@ -139,53 +116,6 @@ namespace BamBooRat.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Cages", (string)null);
-                });
-
-            modelBuilder.Entity("CageTransfer", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("Id")
-                        .HasDefaultValueSql("NEWSEQUENTIALID()");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("FromCageId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Note")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)")
-                        .HasColumnName("Note");
-
-                    b.Property<Guid>("RatId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Reason")
-                        .HasColumnType("int")
-                        .HasColumnName("Reason");
-
-                    b.Property<Guid>("ToCageId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("TransferDate")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("TransferDate");
-
-                    b.Property<DateTime?>("UpdatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FromCageId");
-
-                    b.HasIndex("RatId");
-
-                    b.HasIndex("ToCageId");
-
-                    b.ToTable("CageTransfers", (string)null);
                 });
 
             modelBuilder.Entity("Rat", b =>
@@ -225,9 +155,6 @@ namespace BamBooRat.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("Gender");
 
-                    b.Property<DateTime?>("LastSeparationDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -264,19 +191,13 @@ namespace BamBooRat.Infrastructure.Migrations
                     b.HasOne("Cage", "Cage")
                         .WithMany()
                         .HasForeignKey("CageId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Rat", "Female")
                         .WithMany("FemaleBreedings")
                         .HasForeignKey("FemaleId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Cage", "FemaleOldCage")
-                        .WithMany()
-                        .HasForeignKey("FemaleOldCageId")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Rat", "Male")
@@ -289,35 +210,7 @@ namespace BamBooRat.Infrastructure.Migrations
 
                     b.Navigation("Female");
 
-                    b.Navigation("FemaleOldCage");
-
                     b.Navigation("Male");
-                });
-
-            modelBuilder.Entity("CageTransfer", b =>
-                {
-                    b.HasOne("Cage", "FromCage")
-                        .WithMany("OutgoingTransfers")
-                        .HasForeignKey("FromCageId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Rat", "Rat")
-                        .WithMany("CageTransfers")
-                        .HasForeignKey("RatId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Cage", "ToCage")
-                        .WithMany("IncomingTransfers")
-                        .HasForeignKey("ToCageId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("FromCage");
-
-                    b.Navigation("Rat");
-
-                    b.Navigation("ToCage");
                 });
 
             modelBuilder.Entity("Rat", b =>
@@ -333,17 +226,11 @@ namespace BamBooRat.Infrastructure.Migrations
 
             modelBuilder.Entity("Cage", b =>
                 {
-                    b.Navigation("IncomingTransfers");
-
-                    b.Navigation("OutgoingTransfers");
-
                     b.Navigation("Rats");
                 });
 
             modelBuilder.Entity("Rat", b =>
                 {
-                    b.Navigation("CageTransfers");
-
                     b.Navigation("FemaleBreedings");
 
                     b.Navigation("MaleBreedings");

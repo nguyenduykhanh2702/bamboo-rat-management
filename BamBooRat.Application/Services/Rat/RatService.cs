@@ -26,11 +26,6 @@ public class RatService : IRatService
 
         var errors = new List<ValidationError>();
 
-        if (duplicates.Contains(RatFields.Name))
-        {
-            ValidationHelper.AddError(errors, RatFields.Name, ErrorMessages.DuplicateRatByName);
-        }
-
         if (duplicates.Contains(RatFields.Code))
         {
             ValidationHelper.AddError(errors, RatFields.Code, ErrorMessages.DuplicateRatByCode);
@@ -41,6 +36,9 @@ public class RatService : IRatService
 
         var rat = _mapper.Map<Rat>(createRatDto);
         rat.Status = RatStatus.Alive; // Set default status
+
+        await ValidateAddRatToCage(rat);
+
         await _unitOfWork.RatRespository.AddAsync(rat);
         await _unitOfWork.SaveChangesAsync();
         return _mapper.Map<RatDto>(rat);
@@ -101,6 +99,7 @@ public class RatService : IRatService
             Type = x.Type,
             Status = x.Status,
             Gender = x.Gender,
+            Weight = x.Weight,
             DateOfBirth = x.DateOfBirth,
             Age = x.Age,
             Cage = new CageSimpleDto
@@ -142,8 +141,42 @@ public class RatService : IRatService
         ValidationHelper.ThrowIfAny(errors);
 
         _mapper.Map(ratDto, rat);
+        await ValidateAddRatToCage(rat);
+
         _unitOfWork.RatRespository.Update(rat);
         await _unitOfWork.SaveChangesAsync();
+    }
 
+    private async Task ValidateAddRatToCage(Rat rat)
+    {
+        var errors = new List<ValidationError>();
+
+        var cage = await _unitOfWork.CageRepository.GetByIdAsync(rat.CageId);
+        if (cage == null)
+            throw new NotFoundException(ErrorMessages.CageNotFound);
+
+        var currentCount = await _unitOfWork.RatRespository.Query()
+        .CountAsync(r => r.CageId == rat.CageId);
+
+        //  if baby, check if cage has adult and capacity
+        if (rat.Type == RatType.Baby)
+        {
+            if (currentCount >= cage.Capacity)
+                ValidationHelper.AddError(errors, CageFields.CageId, ErrorMessages.CageFull);
+        }
+
+        var hasAdult = await _unitOfWork.RatRespository.Query()
+        .AnyAsync(r => r.CageId == rat.CageId && r.Type == RatType.Breeding);
+
+        if (rat.Type == RatType.Baby && hasAdult)
+            ValidationHelper.AddError(errors, CageFields.CageId, ErrorMessages.CannotMixBaby);
+
+        //  if breeding, check if cage has any other rat
+        if (rat.Type == RatType.Breeding)
+        {
+            if (currentCount >= 1)
+                ValidationHelper.AddError(errors, CageFields.CageId, ErrorMessages.BreedingOnlyOne);
+        }
+        ValidationHelper.ThrowIfAny(errors);
     }
 }
