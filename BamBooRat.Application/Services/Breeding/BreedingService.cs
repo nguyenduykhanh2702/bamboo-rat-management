@@ -157,7 +157,7 @@ public class BreedingService : IBreedingService
 
         await _unitOfWork.BreedingRepository.AddAsync(breeding);
 
-        await _cageTransferService.CreateAsync(female.Id, femaleOldCage.Id, maleCage.Id, now);
+        await _cageTransferService.CreateAsync(female.Id, femaleOldCage.Id, maleCage.Id, now, TransferReason.Breeding);
         //  Save
         await _unitOfWork.SaveChangesAsync();
         return _mapper.Map<BreedingDto>(breeding);
@@ -223,12 +223,13 @@ public class BreedingService : IBreedingService
         if (breeding.BreedingStatus != BreedingStatus.Breeding)
             ValidationHelper.AddError(errors, "BreedingStatus", "Chỉ có thể tách khi đang trong quá trình phối");
 
-        breeding.Female.CageId = breeding.FemaleOldCageId;
-
         var femaleOldCage = await _unitOfWork.CageRepository.GetByIdAsync(breeding.FemaleOldCageId);
 
         if (femaleOldCage == null)
             throw new NotFoundException("Không tìm thấy chuồng cũ của con cái");
+
+
+        breeding.Female.CageId = breeding.FemaleOldCageId;
 
         femaleOldCage.IsLocked = false;
 
@@ -237,6 +238,13 @@ public class BreedingService : IBreedingService
         breeding.BreedingStatus = BreedingStatus.Separated;
 
         _unitOfWork.BreedingRepository.Update(breeding);
+
+        // add to cage transfer log
+        await _cageTransferService.CreateAsync(breeding.FemaleId,
+                                                breeding.CageId,
+                                                breeding.FemaleOldCageId,
+                                                DateTime.UtcNow,
+                                                TransferReason.Separation);
         await _unitOfWork.SaveChangesAsync();
 
     }
@@ -371,6 +379,7 @@ public class BreedingService : IBreedingService
 
         if (breeding == null)
             throw new NotFoundException("Không tìm thấy quá trình phối với ID đã cho");
+
         var femaleOldCage = await _unitOfWork.CageRepository.GetByIdAsync(breeding.FemaleOldCageId);
 
         if (femaleOldCage == null)
@@ -423,7 +432,11 @@ public class BreedingService : IBreedingService
 
     public async Task<PagedResult<BreedingDto>> GetBreedingsAsync(BreedingParams breedingParams)
     {
-        var query = _unitOfWork.BreedingRepository.Query();
+        var query = _unitOfWork.BreedingRepository.Query()
+                    .Include(x => x.Cage)
+                    .Include(x => x.Female)
+                    .Include(x => x.Male).AsNoTracking();
+
         if (!string.IsNullOrEmpty(breedingParams.Search))
         {
             var keyword = breedingParams.Search.Trim().ToLower();
@@ -447,6 +460,7 @@ public class BreedingService : IBreedingService
                 x.StartDate <= breedingParams.ToDate.Value);
         }
         var pageBreeding = await PaginationHelper.ToPagedResultAsync(query, breedingParams.PageNumber, breedingParams.PageSize);
+
         var breedingDto = _mapper.Map<List<BreedingDto>>(pageBreeding.Items);
         return new PagedResult<BreedingDto>
         {

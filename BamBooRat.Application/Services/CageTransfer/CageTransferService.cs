@@ -10,14 +10,15 @@ public class CageTransferService : ICageTransferService
         _unitOfWork = unitOfWork;
         _mapper = mapper;
     }
-    public async Task CreateAsync(Guid RatId, Guid sourceCageId, Guid destinationCageId, DateTime transferDate)
+    public async Task CreateAsync(Guid RatId, Guid sourceCageId, Guid destinationCageId, DateTime transferDate, TransferReason reason)
     {
         var transfer = new CageTransfer
         {
             RatId = RatId,
             FromCageId = sourceCageId,
             ToCageId = destinationCageId,
-            TransferDate = transferDate
+            TransferDate = transferDate,
+            Reason = reason,
         };
         await _unitOfWork.CageTransferRespository.AddAsync(transfer);
     }
@@ -36,38 +37,16 @@ public class CageTransferService : ICageTransferService
     public async Task<PagedResult<CageTransferDto>> GetAllCageTransferAsync(CageTransferParams cageTransferParams)
     {
         var query = _unitOfWork.CageTransferRespository.Query();
-        var search = string.Empty;
-        if (!string.IsNullOrEmpty(cageTransferParams.FromCageName))
-        {
-            search = cageTransferParams.FromCageName.Trim().ToLower();
-            query = query.Where(x => x.FromCage.Name.ToLower().Contains(search));
-        }
 
-        if (!string.IsNullOrEmpty(cageTransferParams.ToCageName))
+        if (!string.IsNullOrEmpty(cageTransferParams.Search))
         {
-            search = cageTransferParams.ToCageName.Trim().ToLower();
-            query = query.Where(x => x.ToCage.Name.ToLower().Contains(search));
+            var searchTerm = cageTransferParams.Search.Trim().ToLower();
+            query = query.Where(x =>
+                x.FromCage.Name.ToLower().Contains(searchTerm) ||
+                x.ToCage.Name.ToLower().Contains(searchTerm) ||
+                x.Rat.Name.ToLower().Contains(searchTerm) ||
+                x.Rat.Code.ToLower().Contains(searchTerm));
         }
-        if (!string.IsNullOrEmpty(cageTransferParams.RatName))
-        {
-            search = cageTransferParams.RatName.Trim().ToLower();
-            query = query.Where(x => x.Rat.Name.ToLower().Contains(search));
-        }
-        if (!string.IsNullOrEmpty(cageTransferParams.RatCode))
-        {
-            search = cageTransferParams.RatCode.Trim().ToLower();
-            query = query.Where(x => x.Rat.Code.ToLower().Contains(search));
-        }
-        if (cageTransferParams.FromDate.HasValue)
-        {
-            query = query.Where(x => x.TransferDate >= cageTransferParams.FromDate.Value);
-        }
-
-        if (cageTransferParams.ToDate.HasValue)
-        {
-            query = query.Where(x => x.TransferDate <= cageTransferParams.ToDate.Value);
-        }
-
         query = query.OrderByDescending(x => x.TransferDate);
 
         var pageCageTransfer = await PaginationHelper.ToPagedResultAsync(query, cageTransferParams.PageNumber, cageTransferParams.PageSize);

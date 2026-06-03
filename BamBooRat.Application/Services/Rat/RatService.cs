@@ -7,16 +7,15 @@ public class RatService : IRatService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IValidationService _validationService;
-
     private readonly IMapper _mapper;
+
     public RatService(IUnitOfWork unitOfWork,
                     IMapper mapper,
-                   IValidationService validationService)
+                    IValidationService validationService)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _validationService = validationService;
-
     }
 
     public async Task<RatDto> CreateAsync(CreateRatDto createRatDto)
@@ -40,6 +39,14 @@ public class RatService : IRatService
         await ValidateAddRatToCage(rat);
 
         await _unitOfWork.RatRespository.AddAsync(rat);
+
+        rat.WeightHistories.Add(new WeightHistory
+        {
+            Weight = (decimal)rat.Weight,
+            RecordedDate = DateTime.UtcNow,
+            Note = "Khởi tạo dúi, tự động thêm lịch sử cân nặng"
+        });
+
         await _unitOfWork.SaveChangesAsync();
         return _mapper.Map<RatDto>(rat);
     }
