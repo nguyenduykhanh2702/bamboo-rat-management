@@ -5,12 +5,35 @@ using Microsoft.EntityFrameworkCore;
 public class WeightHistoryService : IWeightHistoryService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IValidationService _validationService;
     private readonly IMapper _mapper;
-    public WeightHistoryService(IUnitOfWork unitOfWork, IMapper mapper)
+    public WeightHistoryService(IUnitOfWork unitOfWork, IMapper mapper, IValidationService validationService)
     {
         _unitOfWork = unitOfWork;
+        _validationService = validationService;
         _mapper = mapper;
     }
+
+    public async Task<WeightHistoryDto> CreateWeightHistoryParams(CreateWeightHistoryDto weightHistoryDto)
+    {
+        var rat = await _unitOfWork.RatRespository.GetByIdAsync(weightHistoryDto.RatId);
+        if (rat == null)
+        {
+            throw new NotFoundException("Rat not found");
+        }
+        await _validationService.ValidateAsync(weightHistoryDto);
+
+        var weightHistory = new WeightHistory
+        {
+            RatId = weightHistoryDto.RatId,
+            RecordedDate = weightHistoryDto.RecordedDate,
+            Weight = weightHistoryDto.Weight
+        };
+        await _unitOfWork.WeightHistoryRepository.AddAsync(weightHistory);
+        await _unitOfWork.SaveChangesAsync();
+        return _mapper.Map<WeightHistoryDto>(weightHistory);
+    }
+
     public async Task<PagedResult<WeightHistoryDto>> GetWeightHistoryPageResult(WeightHistoryParams weightHistoryParams)
     {
         var query = _unitOfWork.WeightHistoryRepository.Query().Include(x => x.Rat).AsNoTracking();

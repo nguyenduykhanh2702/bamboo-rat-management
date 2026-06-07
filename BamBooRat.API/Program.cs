@@ -69,8 +69,8 @@ builder.Services.AddScoped<IWeightHistoryService, WeightHistoryService>();
 // Register FluentValidation validators
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCageValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateRatValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<CreateBreedingDto>();
-
+builder.Services.AddValidatorsFromAssemblyContaining<CreateBreedingValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateWeightHistoryValidator>();
 
 builder.Services.AddScoped<IValidationService, ValidationService>();
 
