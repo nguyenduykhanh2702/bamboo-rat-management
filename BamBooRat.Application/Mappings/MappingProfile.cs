@@ -46,5 +46,13 @@ public class MappingProfile : Profile
                 dest => dest.ToCageName,
                 opt => opt.MapFrom(src => src.ToCage.Name));
 
+        CreateMap<WeightHistoryDto, WeightHistory>();
+
+        CreateMap<WeightHistory, WeightHistoryDto>()
+            .ForMember(dest => dest.RatCode,
+                        opt => opt.MapFrom(src => src.Rat.Code))
+
+            .ForMember(dest => dest.RatName,
+                        opt => opt.MapFrom(src => src.Rat.Name));
     }
 }
