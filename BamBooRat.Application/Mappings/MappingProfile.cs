@@ -54,5 +54,10 @@ public class MappingProfile : Profile
 
             .ForMember(dest => dest.RatName,
                         opt => opt.MapFrom(src => src.Rat.Name));
+
+        CreateMap<CreateHealthRecordDto, HealthRecord>();
+        CreateMap<HealthRecord, HealthRecordDetailDto>();
+        CreateMap<HealthRecordDetailDto, HealthRecord>();
+        CreateMap<UpdateHealthRecordDto, HealthRecord>();
     }
 }

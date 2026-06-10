@@ -5,5 +5,6 @@ public interface IUnitOfWork
     IBreedingRepository BreedingRepository { get; }
     ICageTransferRespository CageTransferRespository { get; }
     IWeightHistoryRepository WeightHistoryRepository { get; }
+    IHealthRecordRepository HealthRecordRepository { get; }
     Task<int> SaveChangesAsync();
 }
