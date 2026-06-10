@@ -25,6 +25,7 @@ public class AppDbContext : DbContext
     public DbSet<Breeding> Breedings { get; set; }
     public DbSet<CageTransfer> CageTransfers { get; set; }
     public DbSet<WeightHistory> weightHistories { get; set; }
+    public DbSet<HealthRecord> HealthRecords { get; set; }
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -209,6 +210,42 @@ public class AppDbContext : DbContext
 
             entity.ToTable("WeightHistories");
         });
+
+        builder.Entity<HealthRecord>(entity =>
+        {
+            entity.Property(x => x.Id)
+            .HasColumnName("Id")
+            .HasDefaultValueSql("NEWSEQUENTIALID()");
+
+            entity.Property(x => x.Diagnosis)
+            .HasColumnName("Diagnosis")
+            .HasMaxLength(500)
+            .IsRequired();
+
+            entity.Property(x => x.Treatment)
+            .HasColumnName("Treatment")
+            .HasMaxLength(500)
+            .IsRequired();
+
+            entity.Property(x => x.Medicine)
+            .HasColumnName("Medicine")
+            .HasMaxLength(255);
+
+            entity.Property(x => x.Note)
+            .HasColumnName("Note")
+            .HasMaxLength(500);
+
+            entity.Property(x => x.RecordDate)
+            .HasColumnName("RecordDate")
+            .IsRequired();
+
+            entity.HasOne(x => x.Rat)
+            .WithMany(x => x.HealthRecords)
+            .HasForeignKey(x => x.RatId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+            entity.ToTable("HealthRecords");
+        });
     }
     private void UpdateAuditFields()
     {
@@ -219,7 +256,7 @@ public class AppDbContext : DbContext
             // UPDATE
             if (entry.State == EntityState.Modified)
             {
-                if (entry.Entity is BaseEntity entity)
+                if (entry.Entity is AuditableEntity entity)
                 {
                     entity.UpdatedDate = DateTime.UtcNow;
                 }

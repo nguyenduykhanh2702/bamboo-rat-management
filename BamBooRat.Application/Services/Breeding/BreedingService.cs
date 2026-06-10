@@ -213,7 +213,7 @@ public class BreedingService : IBreedingService
     {
         var breeding = await _unitOfWork.BreedingRepository.Query()
         .Include(x => x.Female)
-        .Include(x => x.Male)
+        .Include(x => x.Male).AsNoTracking()
         .FirstOrDefaultAsync(x => x.Id == breedingId);
 
         if (breeding == null)

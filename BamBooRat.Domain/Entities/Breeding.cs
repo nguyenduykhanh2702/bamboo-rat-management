@@ -1,4 +1,4 @@
-public class Breeding : BaseEntity, ISoftDeletable
+public class Breeding : AuditableEntity, ISoftDeletable
 {
     public Guid MaleId { get; set; }
     public Rat Male { get; set; } = null!;

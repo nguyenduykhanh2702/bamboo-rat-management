@@ -10,12 +10,15 @@ public class UnitOfWork : IUnitOfWork
 
     public IWeightHistoryRepository WeightHistoryRepository { get; }
 
+    public IHealthRecordRepository HealthRecordRepository { get; }
+
     public UnitOfWork(AppDbContext context,
                     ICageRepository cageRepository,
                     IRatRespository ratRepository,
                     IBreedingRepository breedingRepository,
                     ICageTransferRespository cageTransferRespository,
-                    IWeightHistoryRepository weightHistoryRepository)
+                    IWeightHistoryRepository weightHistoryRepository,
+                    IHealthRecordRepository healthRecordRepository)
     {
         _context = context;
         CageRepository = cageRepository;
@@ -23,6 +26,7 @@ public class UnitOfWork : IUnitOfWork
         BreedingRepository = breedingRepository;
         CageTransferRespository = cageTransferRespository;
         WeightHistoryRepository = weightHistoryRepository;
+        HealthRecordRepository = healthRecordRepository;
 
     }
 

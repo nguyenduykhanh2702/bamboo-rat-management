@@ -108,7 +108,6 @@ public class RatService : IRatService
             Gender = x.Gender,
             Weight = x.Weight,
             DateOfBirth = x.DateOfBirth,
-            Age = x.Age,
             Cage = new CageSimpleDto
             {
                 Id = x.Cage.Id,
