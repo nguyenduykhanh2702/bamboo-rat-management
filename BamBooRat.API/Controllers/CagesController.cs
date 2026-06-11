@@ -41,6 +41,6 @@ public class CagesController : BaseController
     public async Task<IActionResult> DeleteCageAsync(Guid id)
     {
         await _cageService.DeleteAsync(id);
-        return Ok(new ApiResponse<string>("Thêm mới dữ liệu thành công"));
+        return Ok(new ApiResponse<string>("Xoá dữ liệu thành công"));
     }
 }
