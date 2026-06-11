@@ -62,6 +62,7 @@ public class MappingProfile : Profile
 
         CreateMap<CreateExpenseDto, Expense>();
         CreateMap<Expense, ExpenseDetailDto>();
+        CreateMap<UpdateExpeseDto, Expense>();
 
     }
 }

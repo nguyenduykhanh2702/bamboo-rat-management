@@ -74,6 +74,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<CreateRatValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateBreedingValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateWeightHistoryValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateHealthRecordValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateExpenseValidator>();
 builder.Services.AddScoped<IValidationService, ValidationService>();
 
 // Register UnitOfWork

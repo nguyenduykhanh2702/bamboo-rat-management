@@ -19,7 +19,7 @@ public class WeightHistoryService : IWeightHistoryService
         var rat = await _unitOfWork.RatRespository.GetByIdAsync(weightHistoryDto.RatId);
         if (rat == null)
         {
-            throw new NotFoundException("Rat not found");
+            throw new NotFoundException($"Không tìm thấy bản ghi Rat với id : {weightHistoryDto.RatId}");
         }
         await _validationService.ValidateAsync(weightHistoryDto);
 
