@@ -1,6 +1,6 @@
 using FluentValidation;
 
-public class CreateExpenseValidator : AbstractValidator<CreateExpenseDto>
+public class CreateExpenseValidator : AbstractValidator<ExpenseRequestDto>
 {
     public CreateExpenseValidator()
     {

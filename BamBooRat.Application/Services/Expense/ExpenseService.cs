@@ -14,7 +14,7 @@ public class ExpenseService : IExpenseService
         _mapper = mapper;
         _validationService = validationService;
     }
-    public async Task<ExpenseDetailDto> AddAsync(CreateExpenseDto dto)
+    public async Task<ExpenseDetailDto> AddAsync(ExpenseRequestDto dto)
     {
         await _validationService.ValidateAsync(dto);
         var expense = _mapper.Map<Expense>(dto);
@@ -68,11 +68,12 @@ public class ExpenseService : IExpenseService
         };
     }
 
-    public async Task UpdateAsync(Guid id, UpdateExpeseDto dto)
+    public async Task UpdateAsync(Guid id, ExpenseRequestDto dto)
     {
         var expense = await _unitOfWork.ExpenseRepository.GetByIdAsync(id);
         if (expense == null)
             throw new NotFoundException($"Không tìm thấy bản ghi chi phí với id: {id}");
+        await _validationService.ValidateAsync(dto);
         _mapper.Map(dto, expense);
         _unitOfWork.ExpenseRepository.Update(expense);
         await _unitOfWork.SaveChangesAsync();

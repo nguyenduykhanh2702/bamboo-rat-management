@@ -15,7 +15,7 @@ public class ExpensesController : BaseController
         return Ok(new ApiResponse<ExpenseDetailDto>(result));
     }
     [HttpPost]
-    public async Task<IActionResult> CreateAsync([FromBody] CreateExpenseDto dto)
+    public async Task<IActionResult> CreateAsync([FromBody] ExpenseRequestDto dto)
     {
         var result = await _expenseService.AddAsync(dto);
         return CreatedAtAction(nameof(GetById),
@@ -29,7 +29,7 @@ public class ExpensesController : BaseController
         return Ok(new ApiResponse<PagedResult<ExpenseDetailDto>>(result));
     }
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> UpdateAsync(Guid id, UpdateExpeseDto dto)
+    public async Task<IActionResult> UpdateAsync(Guid id, ExpenseRequestDto dto)
     {
         await _expenseService.UpdateAsync(id, dto);
         return Ok(new ApiResponse<string>("Cập nhật dữ liệu thành công"));

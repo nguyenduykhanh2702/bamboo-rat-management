@@ -60,9 +60,8 @@ public class MappingProfile : Profile
         CreateMap<HealthRecordDetailDto, HealthRecord>();
         CreateMap<UpdateHealthRecordDto, HealthRecord>();
 
-        CreateMap<CreateExpenseDto, Expense>();
+        CreateMap<ExpenseRequestDto, Expense>();
         CreateMap<Expense, ExpenseDetailDto>();
-        CreateMap<UpdateExpeseDto, Expense>();
 
     }
 }

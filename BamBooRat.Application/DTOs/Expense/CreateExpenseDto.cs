@@ -1,4 +1,4 @@
-public class CreateExpenseDto
+public class ExpenseRequestDto
 {
     public DateTime ExpenseDate { get; set; }
     public ExpenseType Type { get; set; }
