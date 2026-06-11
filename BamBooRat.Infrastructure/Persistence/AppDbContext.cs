@@ -26,6 +26,7 @@ public class AppDbContext : DbContext
     public DbSet<CageTransfer> CageTransfers { get; set; }
     public DbSet<WeightHistory> weightHistories { get; set; }
     public DbSet<HealthRecord> HealthRecords { get; set; }
+    public DbSet<Expense> Expenses { get; set; }
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -246,6 +247,44 @@ public class AppDbContext : DbContext
 
             entity.ToTable("HealthRecords");
         });
+
+        builder.Entity<Expense>(entity =>
+        {
+            entity.Property(x => x.Id)
+            .HasColumnName("Id")
+            .HasDefaultValueSql("NEWSEQUENTIALID()");
+
+            entity.Property(x => x.ItemName)
+            .HasColumnName("ItemName")
+            .HasMaxLength(255)
+            .IsRequired();
+
+            entity.Property(x => x.Quantity)
+            .HasColumnName("Quantity")
+            .IsRequired()
+            .HasPrecision(10, 2);
+
+            entity.Property(x => x.UnitPrice)
+            .HasColumnName("UnitPrice")
+            .IsRequired()
+            .HasPrecision(12, 2);
+
+            entity.Property(x => x.Note)
+            .HasColumnName("Note")
+            .HasMaxLength(500);
+
+            entity.Property(x => x.ExpenseDate)
+            .HasColumnName("ExpenseDate")
+            .IsRequired();
+
+            entity.Property(x => x.Type)
+            .HasColumnName("Type")
+            .IsRequired()
+            .HasConversion<int>();
+
+            entity.ToTable("Expenses");
+        });
+
     }
     private void UpdateAuditFields()
     {
