@@ -24,7 +24,7 @@ public class CageRepository : ICageRepository
 
     public async Task<Cage?> GetByIdAsync(Guid id)
     {
-        return await _context.Cages.FindAsync(id);
+        return await _context.Cages.FirstOrDefaultAsync(x => x.Id == id);
     }
     public IQueryable<Cage> Query()
     {

@@ -8,10 +8,19 @@ public class MappingProfile : Profile
         CreateMap<CreateCageDto, Cage>();
 
         CreateMap<Rat, RatDto>();
-        CreateMap<Rat, RatDetailDto>();
-        CreateMap<Rat, CageSimpleDto>()
-            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Cage.Id))
-            .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Cage.Name));
+        CreateMap<Rat, RatDetailDto>()
+             .ForMember(
+                     dest => dest.Cage,
+                     opt => opt.MapFrom(src => src.Cage));
+
+        CreateMap<Cage, CageSimpleDto>()
+            .ForMember(
+                dest => dest.Id,
+                opt => opt.MapFrom(src => src.Id))
+            .ForMember(
+                dest => dest.Name,
+                opt => opt.MapFrom(src => src.Name));
+
 
         CreateMap<CreateRatDto, Rat>();
         CreateMap<UpdateRatDto, Rat>();
@@ -62,6 +71,7 @@ public class MappingProfile : Profile
 
         CreateMap<ExpenseRequestDto, Expense>();
         CreateMap<Expense, ExpenseDetailDto>();
+        CreateMap<DeathRecord, DeathRecordDto>();
 
     }
 }

@@ -1,4 +1,6 @@
 
+using Microsoft.EntityFrameworkCore;
+
 public class ExpenseRepository : IExpenseRepository
 {
     private readonly AppDbContext _context;
@@ -13,7 +15,7 @@ public class ExpenseRepository : IExpenseRepository
 
     public async Task<Expense?> GetByIdAsync(Guid id)
     {
-        return await _context.Expenses.FindAsync(id);
+        return await _context.Expenses.FirstOrDefaultAsync(x => x.Id == id);
     }
 
     public IQueryable<Expense> Query()

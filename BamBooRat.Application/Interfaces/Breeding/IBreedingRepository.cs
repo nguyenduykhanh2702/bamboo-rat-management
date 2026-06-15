@@ -8,4 +8,5 @@ public interface IBreedingRepository
     void Update(Breeding breeding);
 
     void Remove(Breeding breeding);
+    Task<Breeding?> GetActiveBreedingByRatIdAsync(Guid ratId);
 }

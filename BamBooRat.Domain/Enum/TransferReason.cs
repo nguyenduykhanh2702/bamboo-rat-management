@@ -16,5 +16,6 @@ public enum TransferReason
 
     Sale = 8,              // Xuất bán
 
-    Manual = 9             // Chuyển thủ công
+    Manual = 9,             // Chuyển thủ công
+    BreedingCancelled = 10   // Hủy phối giống do rat chết
 }

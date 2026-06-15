@@ -7,5 +7,6 @@ public interface IUnitOfWork
     IWeightHistoryRepository WeightHistoryRepository { get; }
     IHealthRecordRepository HealthRecordRepository { get; }
     IExpenseRepository ExpenseRepository { get; }
+    IDeathRecordRepository DeathRecordRepository { get; }
     Task<int> SaveChangesAsync();
 }

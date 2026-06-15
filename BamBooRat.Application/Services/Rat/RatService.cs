@@ -108,7 +108,8 @@ public class RatService : IRatService
             Gender = x.Gender,
             Weight = x.Weight,
             DateOfBirth = x.DateOfBirth,
-            Cage = new CageSimpleDto
+            Cage = x.Cage == null ? null
+            : new CageSimpleDto
             {
                 Id = x.Cage.Id,
                 Name = x.Cage.Name
@@ -144,6 +145,11 @@ public class RatService : IRatService
             ValidationHelper.AddError(errors, RatFields.Code, ErrorMessages.DuplicateRatByCode);
         }
 
+        if (ratDto.Status == RatStatus.Dead)
+        {
+            ValidationHelper.AddError(errors, RatFields.Status, ErrorMessages.CannotUpdateRatToDeadStatus);
+        }
+
         ValidationHelper.ThrowIfAny(errors);
 
         _mapper.Map(ratDto, rat);
@@ -156,8 +162,7 @@ public class RatService : IRatService
     private async Task ValidateAddRatToCage(Rat rat)
     {
         var errors = new List<ValidationError>();
-
-        var cage = await _unitOfWork.CageRepository.GetByIdAsync(rat.CageId);
+        var cage = await _unitOfWork.CageRepository.GetByIdAsync(rat.CageId!.Value);
         if (cage == null)
             throw new NotFoundException(ErrorMessages.CageNotFound);
 

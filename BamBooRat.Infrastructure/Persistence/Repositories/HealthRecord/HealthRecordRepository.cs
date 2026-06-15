@@ -1,4 +1,6 @@
 
+using Microsoft.EntityFrameworkCore;
+
 public class HealthRecordRepository : IHealthRecordRepository
 {
     private readonly AppDbContext _context;
@@ -13,7 +15,7 @@ public class HealthRecordRepository : IHealthRecordRepository
 
     public async Task<HealthRecord?> GetByIdAsync(Guid id)
     {
-        return await _context.HealthRecords.FindAsync(id);
+        return await _context.HealthRecords.FirstOrDefaultAsync(x => x.Id == id);
     }
 
     public IQueryable<HealthRecord> Query()

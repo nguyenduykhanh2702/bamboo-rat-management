@@ -8,4 +8,5 @@ public interface IBreedingService
     Task ConFirmBirthAsync(Guid breedingId, ConFirmBirthDto dto);
     Task UpdateOffSpringStatusAsync(Guid breedingId, UpdateOffSpringStatusDto dto);
     Task CancelBreedingAsync(Guid breedingId);
+    Task CancelBreedingBecauseRatDiedAsync(Breeding breeding, Guid deathRatId);
 }

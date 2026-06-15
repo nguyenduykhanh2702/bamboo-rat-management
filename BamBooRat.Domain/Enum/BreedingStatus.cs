@@ -8,5 +8,6 @@ public enum BreedingStatus
     BirthSuccessful, // đã đẻ
     Failed,          // thất bại
     Separated,       // đã tách
-    Cancelled       // đã hủy
+    Cancelled,       // đã hủy
+    FailedBecauseOfDeath // thất bại do rat chết
 }
