@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BamBooRat.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260614081050_AllowNullCageIdFroRat")]
+    partial class AllowNullCageIdFroRat
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -190,9 +193,6 @@ namespace BamBooRat.Infrastructure.Migrations
                         .HasColumnName("Id")
                         .HasDefaultValueSql("NEWSEQUENTIALID()");
 
-                    b.Property<Guid?>("CageId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<int>("Cause")
                         .HasColumnType("int")
                         .HasColumnName("Cause");
@@ -219,8 +219,6 @@ namespace BamBooRat.Infrastructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CageId");
 
                     b.HasIndex("RatId")
                         .IsUnique();
@@ -322,7 +320,7 @@ namespace BamBooRat.Infrastructure.Migrations
                         .HasColumnName("Id")
                         .HasDefaultValueSql("NEWSEQUENTIALID()");
 
-                    b.Property<Guid?>("CageId")
+                    b.Property<Guid>("CageId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("CageId");
 
@@ -480,18 +478,11 @@ namespace BamBooRat.Infrastructure.Migrations
 
             modelBuilder.Entity("DeathRecord", b =>
                 {
-                    b.HasOne("Cage", "Cage")
-                        .WithMany()
-                        .HasForeignKey("CageId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("Rat", "Rat")
-                        .WithOne("DeathRecord")
+                        .WithOne()
                         .HasForeignKey("DeathRecord", "RatId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Cage");
 
                     b.Navigation("Rat");
                 });
@@ -512,7 +503,8 @@ namespace BamBooRat.Infrastructure.Migrations
                     b.HasOne("Cage", "Cage")
                         .WithMany("Rats")
                         .HasForeignKey("CageId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Cage");
                 });
@@ -540,8 +532,6 @@ namespace BamBooRat.Infrastructure.Migrations
             modelBuilder.Entity("Rat", b =>
                 {
                     b.Navigation("CageTransfers");
-
-                    b.Navigation("DeathRecord");
 
                     b.Navigation("FemaleBreedings");
 

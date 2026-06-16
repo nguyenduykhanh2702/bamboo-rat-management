@@ -1,5 +1,6 @@
 
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 public class CageTransferRespository : ICageTransferRespository
 {
@@ -15,7 +16,7 @@ public class CageTransferRespository : ICageTransferRespository
 
     public async Task<CageTransfer?> GetByIdAsync(Guid id)
     {
-        return await _context.CageTransfers.FindAsync(id);
+        return await _context.CageTransfers.FirstOrDefaultAsync(x => x.Id == id);
     }
 
     public IQueryable<CageTransfer> Query()

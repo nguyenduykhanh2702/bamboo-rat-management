@@ -1,5 +1,7 @@
 
 
+using Microsoft.EntityFrameworkCore;
+
 public class WeightHistoryRepository : IWeightHistoryRepository
 {
     private readonly AppDbContext _dbContext;
@@ -15,7 +17,7 @@ public class WeightHistoryRepository : IWeightHistoryRepository
 
     public async Task<WeightHistory?> GetByIdAsync(Guid id)
     {
-        return await _dbContext.weightHistories.FindAsync(id);
+        return await _dbContext.weightHistories.FirstOrDefaultAsync(x => x.Id == id);
     }
 
     public IQueryable<WeightHistory> Query()

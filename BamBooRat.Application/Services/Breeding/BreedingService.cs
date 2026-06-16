@@ -115,12 +115,12 @@ public class BreedingService : IBreedingService
             throw new NotFoundException("Không tìm thấy dúi");
 
         //  Chuồng của con đực
-        var maleCage = await _unitOfWork.CageRepository.GetByIdAsync(male.CageId);
+        var maleCage = await _unitOfWork.CageRepository.GetByIdAsync(male.CageId!.Value);
         if (maleCage == null)
             throw new NotFoundException("Không tìm thấy chuồng con đực");
 
         //  Chuồng cũ của con cái
-        var femaleOldCage = await _unitOfWork.CageRepository.GetByIdAsync(female.CageId);
+        var femaleOldCage = await _unitOfWork.CageRepository.GetByIdAsync(female.CageId!.Value);
         if (femaleOldCage == null)
             throw new NotFoundException("Không tìm thấy chuồng con cái");
 
@@ -213,7 +213,7 @@ public class BreedingService : IBreedingService
     {
         var breeding = await _unitOfWork.BreedingRepository.Query()
         .Include(x => x.Female)
-        .Include(x => x.Male).AsNoTracking()
+        .Include(x => x.Male)
         .FirstOrDefaultAsync(x => x.Id == breedingId);
 
         if (breeding == null)
@@ -469,5 +469,62 @@ public class BreedingService : IBreedingService
             PageNumber = pageBreeding.PageNumber,
             PageSize = pageBreeding.PageSize
         };
+    }
+
+    public async Task CancelBreedingBecauseRatDiedAsync(
+    Breeding breeding,
+    Guid deathRatId)
+    {
+
+        var errors = new List<ValidationError>();
+
+        if (breeding.BreedingStatus != BreedingStatus.Breeding)
+        {
+            ValidationHelper.AddError(
+                errors,
+                "breedingId",
+                $"Bản ghi phối giống với id {breeding.Id} không ở trạng thái phối giống.");
+        }
+
+        bool isFemaleDeath = breeding.FemaleId == deathRatId;
+        bool isMaleDeath = breeding.MaleId == deathRatId;
+
+        if (!isFemaleDeath && !isMaleDeath)
+        {
+            ValidationHelper.AddError(
+                errors,
+                "deathRatId",
+                $"Rat với id {deathRatId} không thuộc bản ghi phối giống này.");
+        }
+
+        if (errors.Any())
+            ValidationHelper.ThrowIfAny(errors);
+
+        if (isMaleDeath)
+        {
+            var femaleOldCage = await _unitOfWork.CageRepository
+                .GetByIdAsync(breeding.FemaleOldCageId);
+
+            if (femaleOldCage == null)
+                throw new NotFoundException(
+                    $"Không tìm thấy chuồng cũ của rat cái.");
+
+            breeding.Female.CageId = breeding.FemaleOldCageId;
+
+            femaleOldCage.IsLocked = false;
+
+            await _cageTransferService.CreateAsync(
+                breeding.Female.Id,
+                breeding.CageId,
+                breeding.FemaleOldCageId,
+                DateTime.UtcNow,
+                TransferReason.BreedingCancelled);
+        }
+
+        // Dù đực hay cái chết đều hủy phối
+        breeding.BreedingStatus = BreedingStatus.FailedBecauseOfDeath;
+        breeding.UpdatedDate = DateTime.UtcNow;
+
+        //_unitOfWork.BreedingRepository.Update(breeding);
     }
 }

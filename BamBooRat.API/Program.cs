@@ -60,6 +60,7 @@ builder.Services.AddScoped<ICageTransferRespository, CageTransferRespository>();
 builder.Services.AddScoped<IWeightHistoryRepository, WeightHistoryRepository>();
 builder.Services.AddScoped<IHealthRecordRepository, HealthRecordRepository>();
 builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
+builder.Services.AddScoped<IDeathRecordRepository, DeathRecordRepository>();
 
 builder.Services.AddScoped<IRatService, RatService>();
 builder.Services.AddScoped<ICageService, CageService>();
@@ -68,6 +69,8 @@ builder.Services.AddScoped<ICageTransferService, CageTransferService>();
 builder.Services.AddScoped<IWeightHistoryService, WeightHistoryService>();
 builder.Services.AddScoped<IHealthRecordService, HealthRecordService>();
 builder.Services.AddScoped<IExpenseService, ExpenseService>();
+builder.Services.AddScoped<IDeathRecordService, DeathRecordService>();
+
 // Register FluentValidation validators
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCageValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateRatValidator>();

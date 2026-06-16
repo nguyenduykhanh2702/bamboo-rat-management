@@ -4,6 +4,8 @@ public static class ErrorMessages
     public const string DuplicateRatByCode = "Mã code đã tồn tại";
 
     public const string DuplicateCageByName = "Tên chuồng đã tồn tại";
+    public const string CannotUpdateRatToDeadStatus =
+    "Không thể cập nhật dúi thành đã chết. Vui lòng sử dụng chức năng ghi nhận cái chết.";
 
     public const string CageFull = "Chuồng đã đầy";
     public const string CageNotFound = "Không tìm thấy chuồng";

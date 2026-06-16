@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BamBooRat.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260614084701_AddCageIdToDeathRecord")]
+    partial class AddCageIdToDeathRecord
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -322,7 +325,7 @@ namespace BamBooRat.Infrastructure.Migrations
                         .HasColumnName("Id")
                         .HasDefaultValueSql("NEWSEQUENTIALID()");
 
-                    b.Property<Guid?>("CageId")
+                    b.Property<Guid>("CageId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("CageId");
 
@@ -512,7 +515,8 @@ namespace BamBooRat.Infrastructure.Migrations
                     b.HasOne("Cage", "Cage")
                         .WithMany("Rats")
                         .HasForeignKey("CageId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Cage");
                 });

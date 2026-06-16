@@ -10,7 +10,16 @@ public class BreedingRepository : IBreedingRepository
     }
     public async Task AddAsync(Breeding breeding)
     {
-        await _context.AddAsync(breeding);
+        await _context.Breedings.AddAsync(breeding);
+    }
+
+    public async Task<Breeding?> GetActiveBreedingByRatIdAsync(Guid ratId)
+    {
+        return await _context.Breedings.
+                    Include(x => x.Female).
+                    Include(x => x.Male).
+                    FirstOrDefaultAsync(x => (x.FemaleId == ratId || x.MaleId == ratId)
+                                && x.BreedingStatus == BreedingStatus.Breeding);
     }
 
     public async Task<Breeding?> GetByIdAsync(Guid id)
@@ -25,11 +34,11 @@ public class BreedingRepository : IBreedingRepository
 
     public void Remove(Breeding breeding)
     {
-        _context.Remove(breeding);
+        _context.Breedings.Remove(breeding);
     }
 
     public void Update(Breeding breeding)
     {
-        _context.Update(breeding);
+        _context.Breedings.Update(breeding);
     }
 }

@@ -13,6 +13,7 @@ public class UnitOfWork : IUnitOfWork
     public IHealthRecordRepository HealthRecordRepository { get; }
 
     public IExpenseRepository ExpenseRepository { get; }
+    public IDeathRecordRepository DeathRecordRepository { get; }
 
     public UnitOfWork(AppDbContext context,
                     ICageRepository cageRepository,
@@ -21,7 +22,8 @@ public class UnitOfWork : IUnitOfWork
                     ICageTransferRespository cageTransferRespository,
                     IWeightHistoryRepository weightHistoryRepository,
                     IHealthRecordRepository healthRecordRepository,
-                    IExpenseRepository expenseRepository)
+                    IExpenseRepository expenseRepository,
+                    IDeathRecordRepository deathRecordRepository)
     {
         _context = context;
         CageRepository = cageRepository;
@@ -31,6 +33,7 @@ public class UnitOfWork : IUnitOfWork
         WeightHistoryRepository = weightHistoryRepository;
         HealthRecordRepository = healthRecordRepository;
         ExpenseRepository = expenseRepository;
+        DeathRecordRepository = deathRecordRepository;
 
     }
 

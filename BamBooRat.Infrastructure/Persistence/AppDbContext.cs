@@ -27,6 +27,7 @@ public class AppDbContext : DbContext
     public DbSet<WeightHistory> weightHistories { get; set; }
     public DbSet<HealthRecord> HealthRecords { get; set; }
     public DbSet<Expense> Expenses { get; set; }
+    public DbSet<DeathRecord> DeathRecords { get; set; }
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -121,12 +122,12 @@ public class AppDbContext : DbContext
 
             entity.Property(x => x.CageId)
             .HasColumnName("CageId")
-            .IsRequired();
+            .IsRequired(false);
 
             entity.HasOne(x => x.Cage)
             .WithMany(c => c.Rats)
             .HasForeignKey(x => x.CageId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<Breeding>()
@@ -285,6 +286,43 @@ public class AppDbContext : DbContext
             entity.ToTable("Expenses");
         });
 
+        builder.Entity<DeathRecord>(entity =>
+        {
+            entity.Property(x => x.Id)
+            .HasColumnName("Id")
+            .HasDefaultValueSql("NEWSEQUENTIALID()");
+
+            entity.Property(x => x.DeathDate)
+            .HasColumnName("DeathDate")
+            .IsRequired();
+
+            entity.Property(x => x.Cause)
+                .HasColumnName("Cause")
+                .IsRequired();
+
+            entity.Property(x => x.Note)
+                .HasColumnName("Note")
+                .HasMaxLength(500);
+
+            entity.HasOne(x => x.Rat)
+                    .WithOne(x => x.DeathRecord)
+                    .HasForeignKey<DeathRecord>(x => x.RatId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.Cage)
+                .WithMany()
+                .HasForeignKey(x => x.CageId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(x => x.RatId)
+                .IsUnique();
+
+
+            entity.Property(x => x.CreatedDate)
+                .HasColumnName("CreatedDate")
+                .HasDefaultValueSql("GETUTCDATE()");
+            entity.ToTable("DeathRecords");
+        });
     }
     private void UpdateAuditFields()
     {
