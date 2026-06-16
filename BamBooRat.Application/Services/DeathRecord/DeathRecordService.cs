@@ -66,11 +66,52 @@ public class DeathRecordService : IDeathRecordService
 
         rat.CageId = null;
 
-        //_unitOfWork.RatRespository.Update(rat);
-
         await _unitOfWork.SaveChangesAsync();
 
         return _mapper.Map<DeathRecordDto>(deathRecord);
+    }
+
+    public async Task<PagedResult<DeathRecordDto>> GetAllDeathRecordsAsync(DeathRecordParams deathRecordParams)
+    {
+        var query = _unitOfWork.DeathRecordRepository.Query().
+        Include(x => x.Rat).
+        Include(x => x.Cage).
+        Select(x => new DeathRecordDto
+        {
+            Id = x.Id,
+            RatId = x.RatId,
+            RatCode = x.Rat.Code,
+            RatName = x.Rat.Name,
+            // CageName = x.Cage != null ? x.Cage.Name : "NULL"
+            CageName = x.Cage != null ? x.Cage.Name : null,
+            DeathDate = x.DeathDate
+        });
+        if (!string.IsNullOrEmpty(deathRecordParams.Search))
+        {
+            string keyword = deathRecordParams.Search.Trim().ToLower();
+            query = query.Where(x =>
+                            x.RatCode != null && x.RatCode.ToLower().Contains(keyword) ||
+                            x.CageName != null && x.CageName.ToLower().Contains(keyword));
+        }
+        if (deathRecordParams.FromDate.HasValue)
+        {
+            query = query.Where(x => x.DeathDate >= deathRecordParams.FromDate);
+        }
+        if (deathRecordParams.ToDate.HasValue)
+        {
+            query = query.Where(x => x.DeathDate <= deathRecordParams.ToDate);
+        }
+        query = query.OrderByDescending(x => x.DeathDate);
+        var deathRecordPages = await PaginationHelper.ToPagedResultAsync(query, deathRecordParams.PageNumber,
+                                                             deathRecordParams.PageSize);
+        return new PagedResult<DeathRecordDto>
+        {
+            Items = deathRecordPages.Items.ToList(),
+            TotalCount = deathRecordPages.TotalCount,
+            PageNumber = deathRecordParams.PageNumber,
+            PageSize = deathRecordParams.PageSize
+
+        };
     }
 
     public async Task<DeathRecordDto> GetDeathRecordByIdAsync(Guid id)

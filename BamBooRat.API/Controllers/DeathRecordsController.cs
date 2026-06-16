@@ -15,6 +15,12 @@ public class DeathRecordsController : BaseController
         var deathRecords = await _deathRecordService.GetDeathRecordByIdAsync(id);
         return Ok(new ApiResponse<DeathRecordDto>(deathRecords));
     }
+    [HttpGet]
+    public async Task<IActionResult> GetDeathRecordPageAsync([FromQuery] DeathRecordParams deathRecordParams)
+    {
+        var result = await _deathRecordService.GetAllDeathRecordsAsync(deathRecordParams);
+        return Ok(new ApiResponse<PagedResult<DeathRecordDto>>(result));
+    }
     [HttpPost]
     public async Task<IActionResult> CreateDeathRecordAsync([FromBody] DeathRecordRequestDto dto)
     {
